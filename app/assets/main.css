@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root, :root[data-theme="dark"] {
+  --background: black;
+
+  --text-color: white;
+  --text-color-transluscent: rgba(255,255,255,0.5);
+
+  --box-shadow: 2px 2px 10px black;
+
+  --bg: hsl(240, 15%, 8%);
+  --bg-dark-2: hsl(from var(--bg) h s calc(l - 2));
+  --bg-light-5: hsl(from var(--bg) h s calc(l + 5));
+  --bg-light-10: hsl(from var(--bg) h s calc(l + 10));
+  --bg-light-15: hsl(from var(--bg) h s calc(l + 15));
+
+
+  --content: hsl(240, 55%, 8%);
+  --content-transluscent: hsla(240, 55%, 8%, 0.5);
+  --content-dark-5: hsl(from var(--content) h s calc(l - 5));
+  --content-dark-2: hsl(from var(--content) h s calc(l - 2));
+  --content-light-5: hsl(from var(--content) h s calc(l + 5));
+  --content-light-10: hsl(from var(--content) h s calc(l + 10));
+  --content-light-15: hsl(from var(--content) h s calc(l + 15));
+
+
+  --bg-alt: hsl(194, 78%, 16%);
+  --bg-alt-light2: hsl(from var(--bg-alt) h calc(s - 40) calc(l + 10));;
+
+  --action-bg: hsl(308, 92%, 10%);
+  --action-bg-light1: hsl(from var(--action-bg) h calc(s - 40) calc(l + 5));
+  --red-bg: rgb(126, 12, 27);
+
+  --error-red: rgb(223, 91, 91);
+  --success-green: rgb(97, 202, 97);
+
+  /*  Syntax highlighting */
+  --green: rgb(112, 163, 92);
+  --pink: pink;
+  --yellow: rgb(245, 245, 174);
+  --orange: rgb(236, 158, 113);
+  --blue: rgb(123, 194, 194);
+}
+body.light-mode {
+  color: var(--text-color);
+  background: var(--background);
+
+  --background: white;
+
+  --text-color: black;
+  --text-color-transluscent: rgba(0,0,0,0.5);
+
+  --bg: hsl(209, 86%, 78%);
+  --bg-transluscent: hsla(209, 86%, 78%, 0.5);
+
+  --bg-alt: hsl(194, 78%, 49%);
+
+  --action-bg: rgb(203, 156, 221);
+  --red-bg: rgb(255, 112, 131);
+
+  --error-red: rgb(212, 147, 147);
+  --success-green: rgb(97, 202, 97);
+
+  --green: rgb(55, 92, 41);
+  --pink: rgb(165, 37, 59);
+  --yellow: rgb(119, 82, 2);
+  --orange: rgb(139, 56, 8);
+  --blue: rgb(64, 74, 117);
+
+}
+
+.bg-theme-bg {
+  background-color: var(--bg);
+}
+.bg-theme-bg-darker-2 {
+  background-color: var(--bg-dark-2);
+}
+.bg-theme-content {
+  background-color: var(--content);
+}
+.bg-theme-content-darker-5 {
+  background-color: var(--content-dark-5);
+}
+.bg-theme-content-darker-2 {
+  background-color: var(--content-dark-2);
+}
+.bg-theme-content-lighter-5 {
+  background-color: var(--content-light-5);
+}
+.bg-theme-content-lighter-10 {
+  background-color: var(--content-light-10);
+}
+.bg-theme-content-lighter-15 {
+  background-color: var(--content-light-15);
+}
+
+
+.text-theme-text {
+  color: var(--text-color);
+}
