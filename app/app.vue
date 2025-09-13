@@ -1,21 +1,46 @@
 <template>
   <div class="bg-theme-bg w-screen h-screen">
     <NuxtRouteAnnouncer />
-    <div class="w-screen h-16 bg-theme-bg-darker-2">
-      <div class="max-w-7xl mx-auto h-full flex items-center px-4">
+    <!-- Top menu navbar, with sign in / sign out / user options-->
+    <div class="w-screen h-16 bg-theme-bg-darker-2 flex items-center gap-2 justify-around px-4">
+      <NuxtLink to="/">
         <h1 class="text-2xl font-bold">&#129387; DataPantry</h1>
-        <div class="flex-1"><!-- spacer --></div>
-        <button class="bg-theme-bg-darker-1 text-theme-text px-4 py-2 rounded hover:bg-theme-bg-darker-0 transition">
+      </NuxtLink>
+      <div class="flex-1"><!-- spacer --></div>
+      <div class="flex gap-2" v-if="!currentUser && !loading">
+        <UButton to="/sign-in" 
+          class="bg-theme-bg-darker-1 text-theme-text px-4 py-2 rounded hover:bg-theme-bg-darker-0 transition"
+        >
           Sign In
-        </button>
-        <button class="ml-4 bg-theme-content-lighter-15 cursor-pointer
-         text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+        </UButton>
+        <UButton to="/sign-up"
+          class="cursor-pointer text-white" color="bg3">
           Sign Up
-        </button>
+        </UButton>
+      </div>
+      <div v-else-if="currentUser && !loading">
+        <UDropdownMenu
+          :items="userMenu"
+          :ui="{
+            content: 'w-48'
+          }"
+        >
+          <UButton to="/dashboard" 
+            class="cursor-pointer text-white" color="bg3">
+            {{ currentUser.username }}
+          </UButton>
+        </UDropdownMenu>
+      </div>
+      <div class="flex gap-2" v-else>
+        <USkeleton class="h-6 w-24 rounded-full" />
+        <USkeleton class="h-6 w-24 rounded-full" />
       </div>
     </div>
+
+    <!-- Main content area -->
     <div class="flex">
-      <UNavigationMenu orientation="vertical" :items="items" v-if="route.path !== '/'"
+      <UNavigationMenu orientation="vertical" :items="sidebarMenu" 
+      v-if="!['/', '/sign-up', '/sign-in'].includes(route.path)"
         class="data-[orientation=vertical]:w-48 bg-theme-bg-darker-2
           h-full min-h-[calc(100vh-4rem)]" 
       />
@@ -26,16 +51,59 @@
 </template>
 
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 import { useRoute } from 'vue-router';
+import { useDatabase } from '@/composables/useDatabase'
+
+const { currentUser, setCurrentUser, loading, signOut } = useDatabase()
+
 // Get the current route
 const route = ref(useRoute());
 
-onMounted(() => {
+onMounted(async () => {
   document.documentElement.setAttribute("data-theme", 'dark');
+
+  //  Check for user session, log user in
+  const sessionId = localStorage.getItem('sessionId')
+  if (sessionId && !currentUser.value) {
+    try {
+      const response = await $fetch('/api/auth/validate-session', {
+        method: 'POST',
+        body: { sessionId }
+      })
+      loading.value = false;
+      if (response.success) {
+        setCurrentUser(response.user as any)
+      }
+    } catch (error) {
+      // Invalid session, remove from localStorage
+      localStorage.removeItem('sessionId')
+    }
+  }
 })
 
-const items = ref<NavigationMenuItem[][]>([
+const userMenu = ref<DropdownMenuItem[]>([
+  {
+    label: 'Dashboard',
+    icon: 'i-lucide-dashboard',
+    to: '/dashboard'
+  },
+  {
+    label: 'Settings',
+    icon: 'i-lucide-settings',
+    to: '/settings'
+  },
+  {
+    label: 'Sign Out',
+    icon: 'i-lucide-log-out',
+    onSelect() {
+      signOut()
+    }
+  }
+])
+
+
+const sidebarMenu = ref<NavigationMenuItem[][]>([
   [
     {
       label: 'Links',

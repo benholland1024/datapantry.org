@@ -9,8 +9,14 @@
           DataPantry is still in beta. <br/>Send feedback to <a href="mailto:benholland1024@gmail.com">benholland1024@gmail.com</a>.
         </p>
         <br/>
-        <button onclick="render_register_input()" id="landing-reg-btn">Register to create a database!</button>
-        <button onclick="boot_side_bar();" id="landing-dash-btn">Go to your dashboard!</button>
+        <div class="flex gap-4 mb-8">
+          <UButton color="bg3" class="text-white" onclick="render_register_input()">
+            Register to create a database!
+          </UButton>
+          <UButton color="bg3" class="text-white" onclick="boot_side_bar();">
+            Go to your dashboard!
+          </UButton>
+        </div>
       </div>
       <div id="landing-image">
         <img src="/DataPantryLogo.png" alt="Landing Image" />

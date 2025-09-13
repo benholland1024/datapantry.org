@@ -1,75 +1,69 @@
-# Nuxt Minimal Starter
+# 🥫 datapantry.org
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A Nuxt website for database management. Welcome to my crib. 👋
 
-## Setup
+## 🚀 Setup
 
-Make sure to install dependencies:
+To get the database working, you'll need to add a file called `.env`. 
+See `.env-example` for the format. Then...
 
 ```bash
-# npm
-npm install
-
-# pnpm
+# Install pnpm dependencies
 pnpm install
 
-# yarn
-yarn install
-
-# bun
-bun install
+# Set up database (first time only)
+pnpm db:setup      # Creates and starts PostgreSQL container
+pnpm db:generate   # Generates migration files from schema
+pnpm db:migrate    # Applies migrations to database
 ```
 
-## Development Server
+## 👩‍💻 Development Server
 
 Start the development server on `http://localhost:3000`:
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+# Start the database for daily development
+pnpm db:start      # Start container (if stopped)
+pnpm dev           # Start Nuxt development server
+pnpm db:stop       # Stop container when done
 ```
 
-## Production
+## 🐛 Debugging tips
+
+When running `pnpm db:setup` or `pnpm db:start`, if you get an error that says `ports are not available`:
+
+```bash
+sudo lsof -i :5432  # Check what's using port 5432
+sudo systemctl stop postgresql # Stop local postgres, if needed
+```
+
+To look at the database data, run this, then go to the URL it suggests:
+
+```bash
+pnpm db:studio
+```
+
+If you need to restart the database, deleting all data:
+
+```bash
+# Fresh start
+pnpm db:reset  # Remove and recreate everything
+```
+
+## 🖥️ Production
 
 Build the application for production:
 
 ```bash
-# npm
-npm run build
-
 # pnpm
 pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
 
 Locally preview production build:
 
 ```bash
-# npm
-npm run preview
-
 # pnpm
 pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

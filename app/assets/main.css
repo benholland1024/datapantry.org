@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+:root {
+  --ui-bg: hsl(240, 15%, 8%);
+  --ui-content: hsl(240, 55%, 8%);
+  --ui-bg2: hsl(308, 92%, 10%);
+  --ui-bg3: rgb(32, 32, 124);
+  --ui-primary: rgb(97, 97, 252);
+}
+
 :root, :root[data-theme="dark"] {
   --background: black;
 
@@ -70,9 +78,6 @@ body.light-mode {
 
 }
 
-.bg-theme-bg {
-  background-color: var(--bg);
-}
 .bg-theme-bg-darker-2 {
   background-color: var(--bg-dark-2);
 }
