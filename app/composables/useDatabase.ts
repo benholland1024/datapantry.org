@@ -31,10 +31,23 @@ export function useDatabase() {
   }
 
   const fetchUserDatabases = async () => {
+    if (!process.client) return
+
+    const sessionId = localStorage.getItem('sessionId')
+    
+    if (!sessionId) {
+      error.value = 'No active session'
+      return
+    }
+  
     loading.value = true
     error.value = null
+    
     try {
-      const response = await $fetch<any>('/api/databases')
+      const response = await $fetch<any>(
+        `/api/databases?sessionId=${sessionId}`,
+        { method: 'GET' }
+      )
       userDatabases.value = response.databases
     } catch (err) {
       error.value = 'Failed to fetch databases'
@@ -50,7 +63,27 @@ export function useDatabase() {
   }
 
   const createDatabase = async (name: string) => {
-    // API call to create database
+    const sessionId = localStorage.getItem('sessionId')
+    
+    if (!sessionId) {
+      error.value = 'No active session'
+      return
+    }
+  
+    try {
+      const response = await $fetch<any>('/api/databases', {
+        method: 'POST',
+        body: { name, sessionId }
+      })
+  
+      // Add the new database to the local state
+      userDatabases.value.push(response.database)
+      
+      return response.database
+    } catch (error: any) {
+      error.value = 'Failed to create database'
+      throw error
+    }
   }
 
   const createTable = async (databaseId: number, tableName: string, columns: Array<{name: string, datatype: string}>) => {

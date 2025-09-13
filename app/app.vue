@@ -60,26 +60,31 @@ const { currentUser, setCurrentUser, loading, signOut } = useDatabase()
 // Get the current route
 const route = ref(useRoute());
 
-onMounted(async () => {
-  document.documentElement.setAttribute("data-theme", 'dark');
-
-  //  Check for user session, log user in
+// Check session immediately on client-side (non-blocking)
+if (process.client) {
   const sessionId = localStorage.getItem('sessionId')
   if (sessionId && !currentUser.value) {
-    try {
-      const response = await $fetch('/api/auth/validate-session', {
-        method: 'POST',
-        body: { sessionId }
-      })
-      loading.value = false;
+    // Use .then() instead of await to avoid blocking
+    $fetch('/api/auth/validate-session', {
+      method: 'POST',
+      body: { sessionId }
+    }).then(response => {
       if (response.success) {
         setCurrentUser(response.user as any)
       }
-    } catch (error) {
-      // Invalid session, remove from localStorage
+      loading.value = false
+    }).catch(error => {
+      console.error('Session validation failed:', error)
       localStorage.removeItem('sessionId')
-    }
+      loading.value = false
+    })
+  } else {
+    loading.value = false
   }
+}
+
+onMounted(async () => {
+  document.documentElement.setAttribute("data-theme", 'dark');
 })
 
 const userMenu = ref<DropdownMenuItem[]>([
@@ -106,109 +111,33 @@ const userMenu = ref<DropdownMenuItem[]>([
 const sidebarMenu = ref<NavigationMenuItem[][]>([
   [
     {
-      label: 'Links',
+      label: 'Databases',
       type: 'label'
     },
+    // Insert databases here, with tables as children
     {
-      label: 'Guide',
-      icon: 'i-lucide-book-open',
-      children: [
-        {
-          label: 'Introduction',
-          description: 'Fully styled and customizable components for Nuxt.',
-          icon: 'i-lucide-house'
-        },
-        {
-          label: 'Installation',
-          description: 'Learn how to install and configure Nuxt UI in your application.',
-          icon: 'i-lucide-cloud-download'
-        },
-        {
-          label: 'Icons',
-          icon: 'i-lucide-smile',
-          description: 'You have nothing to do, @nuxt/icon will handle it automatically.'
-        },
-        {
-          label: 'Colors',
-          icon: 'i-lucide-swatch-book',
-          description: 'Choose a primary and a neutral color from your Tailwind CSS theme.'
-        },
-        {
-          label: 'Theme',
-          icon: 'i-lucide-cog',
-          description: 'You can customize components by using the `class` / `ui` props or in your app.config.ts.'
-        }
-      ]
-    },
-    {
-      label: 'Composables',
+      label: 'SampleDB',
       icon: 'i-lucide-database',
-      children: [
-        {
-          label: 'defineShortcuts',
-          icon: 'i-lucide-file-text',
-          description: 'Define shortcuts for your application.',
-          to: '/'
-        },
-        {
-          label: 'useOverlay',
-          icon: 'i-lucide-file-text',
-          description: 'Display a modal/slideover within your application.',
-          to: '/'
-        },
-        {
-          label: 'useToast',
-          icon: 'i-lucide-file-text',
-          description: 'Display a toast within your application.',
-          to: '/'
-        }
-      ]
-    },
-    {
-      label: 'Components',
-      icon: 'i-lucide-box',
-      to: '/',
-      active: true,
+      to: '/dashboard',
       defaultOpen: true,
       children: [
         {
-          label: 'Link',
-          icon: 'i-lucide-file-text',
-          description: 'Use NuxtLink with superpowers.',
-          to: '/'
+          label: 'Users',
+          icon: 'i-lucide-table',
+          //to: '/dashboard/tables/users'
         },
         {
-          label: 'Modal',
-          icon: 'i-lucide-file-text',
-          description: 'Display a modal within your application.',
-          to: '/'
+          label: 'Products',
+          icon: 'i-lucide-table',
+          //to: '/dashboard/tables/products'
         },
         {
-          label: 'NavigationMenu',
-          icon: 'i-lucide-file-text',
-          description: 'Display a list of links.',
-          to: '/'
-        },
-        {
-          label: 'Pagination',
-          icon: 'i-lucide-file-text',
-          description: 'Display a list of pages.',
-          to: '/'
-        },
-        {
-          label: 'Popover',
-          icon: 'i-lucide-file-text',
-          description: 'Display a non-modal dialog that floats around a trigger element.',
-          to: '/'
-        },
-        {
-          label: 'Progress',
-          icon: 'i-lucide-file-text',
-          description: 'Show a horizontal bar to indicate task progression.',
-          to: '/'
+          label: 'Orders',
+          icon: 'i-lucide-table',
+          //to: '/dashboard/tables/orders'
         }
       ]
-    }
+    },
   ],
   [
     {
