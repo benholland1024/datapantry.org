@@ -26,20 +26,32 @@ export const databases = pgTable('databases', {
   updatedAt: timestamp('updated_at').defaultNow(),
 })
 
-// User-created tables within databases
-export const tables = pgTable('tables', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
+export const userTables = pgTable('user_tables', {
+  id: varchar('id', { length: 36 }).primaryKey(), // UUID is 36 chars
   databaseId: integer('database_id').notNull().references(() => databases.id),
-  columns: jsonb('columns').$type<Array<{name: string, datatype: string}>>(), // Store column definitions
+  name: varchar('name', { length: 255 }).notNull(),
+  x: integer('x').notNull(),
+  y: integer('y').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const userColumns = pgTable('user_columns', {
+  id: varchar('id', { length: 36 }).primaryKey(), // UUID
+  tableId: varchar('table_id', { length: 36 }).notNull().references(() => userTables.id),
+  name: varchar('name', { length: 255 }).notNull(),
+  datatype: varchar('datatype', { length: 100 }).notNull(),
+  constraint: varchar('constraint', { length: 100 }).default('none'),
+  isRequired: boolean('is_required').default(false),
+  orderIndex: integer('order_index').notNull(),
+  foreignKey: jsonb('foreign_key').$type<{tableId: number, columnName: string}>(), // Add this!
+  createdAt: timestamp('created_at').defaultNow(),
 })
 
 // User-created rows within tables
 export const rows = pgTable('rows', {
   id: serial('id').primaryKey(),
-  tableId: integer('table_id').notNull().references(() => tables.id),
+  tableId: integer('table_id').notNull().references(() => userTables.id),
   data: jsonb('data').$type<Record<string, any>>(), // Store actual row data
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -48,5 +60,6 @@ export const rows = pgTable('rows', {
 export type User = typeof users.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Database = typeof databases.$inferSelect
-export type Table = typeof tables.$inferSelect
+export type UserTables = typeof userTables.$inferSelect
+export type UserColumn = typeof userColumns.$inferSelect
 export type Row = typeof rows.$inferSelect

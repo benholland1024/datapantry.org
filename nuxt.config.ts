@@ -12,6 +12,7 @@ export default defineNuxtConfig({
         'bg',
         'bg2',
         'bg3',
+        'gold',
         'content',
         'info',
         'success',

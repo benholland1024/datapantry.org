@@ -5,11 +5,13 @@
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Existing databases -->
-      <div v-for="database in userDatabases" :key="database.id" 
-           class="w-64 h-32 bg-bg3 rounded-lg">
+      <NuxtLink v-for="database in userDatabases" :key="database.id" 
+        :to="`/database/${database.id}`"
+        class="w-64 h-32 bg-bg3 rounded-lg cursor-pointer"
+      >
         <h2 class="text-xl font-semibold p-2">{{ database.name }}</h2>
         <p class="p-2">Tables: {{ database.tables.length }}</p>
-      </div>
+      </NuxtLink>
       
       <!-- Create new database button -->
       <div class="w-64 h-32 border-bg3 border-2 border-dashed rounded-lg flex 
@@ -60,9 +62,4 @@ const handleCreateDatabase = async () => {
     console.error('Failed to create database:', error)
   }
 }
-
-// Fetch databases when component mounts
-onMounted(() => {
-  fetchUserDatabases()
-})
 </script>

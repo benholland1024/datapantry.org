@@ -17,6 +17,17 @@ export interface TableStructure {
   rows: Array<Record<string, any>>
 }
 
+interface ColumnStructure {
+  name: string
+  datatype: 'String' | 'Number' | 'Foreign Key'
+  constraint: 'none' | 'primary' | 'unique'
+  isRequired: boolean
+  foreignKey?: {  // Only exists when datatype === 'Foreign Key'
+    tableId: number
+    columnName: string
+  }
+}
+
 const currentUser = ref<UserStructure | null>(null)
 const userDatabases = ref<DatabaseStructure[]>([])
 const currentDatabase = ref<DatabaseStructure | null>(null)
@@ -25,13 +36,18 @@ const error = ref<string | null>(null)
 
 export function useDatabase() {
 
+  // Set the current user AND fetch their databases.
   const setCurrentUser = (user: UserStructure) => {
     currentUser.value = user
     console.log(currentUser.value)
+
+    fetchUserDatabases()
   }
 
   const fetchUserDatabases = async () => {
     if (!process.client) return
+
+    console.log('Fetching user databases...')
 
     const sessionId = localStorage.getItem('sessionId')
     
