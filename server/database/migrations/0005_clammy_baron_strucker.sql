@@ -1,1 +1,0 @@
-ALTER TABLE "user_columns" ADD COLUMN "foreign_key" jsonb;

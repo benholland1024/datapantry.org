@@ -121,15 +121,15 @@ import { v4 as uuidv4 } from 'uuid'
 
 // Props
 const props = defineProps<{
-  selectedTable: number | null
+  selectedTable: string | null
   tables: any[]
 }>()
 
 // Emits 
 const emit = defineEmits<{
   close: []
-  updateTable: [tableId: number, updates: any]
-  deleteTable: [tableId: number] // Add this
+  updateTable: [tableId: string, updates: any]
+  deleteTable: [tableId: string] 
 }>()
 
 // Datatype options: [String, Number, + FK - other tables...]

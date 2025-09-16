@@ -97,7 +97,7 @@ const zoomLevel = ref(1)
 
 // Table data
 const databaseId = parseInt(route.params.databaseId as string)
-const selectedTable = ref<number | null>(null)
+const selectedTable = ref<string | null>(null)
 const tables = ref<any[]>([])
 const isLoading = ref(false)
 const saveStatus = ref<'idle' | 'editing' | 'saving' | 'saved' | 'error'>('idle')
@@ -185,7 +185,7 @@ watch(currentDatabase, () => {
 }, { immediate: true })
 
 
-const handleTableUpdate = (tableId: number, updates: any) => {
+const handleTableUpdate = (tableId: string, updates: any) => {
   console.log('handleTableUpdate called with:', { tableId, updates })
   
   const tableIndex = tables.value.findIndex(table => table.id === tableId)
@@ -253,7 +253,7 @@ useHead({
 })
 
 // Delete a table
-const deleteTable = (tableId: number) => {
+const deleteTable = (tableId: string) => {
   const index = tables.value.findIndex(table => table.id === tableId)
   if (index !== -1) {
     tables.value.splice(index, 1)

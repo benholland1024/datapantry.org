@@ -1,7 +1,7 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'blue',
+      primary: 'skyblue',
       neutral: 'zinc',
       bg: 'hsl(240, 15%, 8%)',
       bg2: 'hsl(308, 92%, 10%)',

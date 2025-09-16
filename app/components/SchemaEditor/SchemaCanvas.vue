@@ -99,14 +99,14 @@
 // Props
 const props = defineProps<{
   tables: any[]
-  selectedTable: number | null
+  selectedTable: string | null
   zoomLevel: number
 }>()
 
 // Emits
 const emit = defineEmits<{
-  selectTable: [tableId: number]
-  updateTable: [tableId: number, updates: any]
+  selectTable: [tableId: string]
+  updateTable: [tableId: string, updates: any]
   createTable: []
   updateZoom: [zoomLevel: number]
 }>()
@@ -151,7 +151,7 @@ const getColumnsHeight = (table: any) => {
 }
 
 // Table selection
-const selectTable = (tableId: number) => {
+const selectTable = (tableId: string) => {
   emit('selectTable', tableId)
 }
 

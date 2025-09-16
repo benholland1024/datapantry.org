@@ -6,7 +6,7 @@
   --ui-content: hsl(240, 55%, 8%);
   --ui-bg2: hsl(308, 92%, 10%);
   --ui-bg3: rgb(32, 32, 124);
-  --ui-primary: rgb(97, 97, 252);
+  --ui-primary: skyblue;
   --ui-gold: oklch(85.2% 0.199 91.936);
 }
 

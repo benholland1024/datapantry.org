@@ -44,15 +44,15 @@ export const userColumns = pgTable('user_columns', {
   constraint: varchar('constraint', { length: 100 }).default('none'),
   isRequired: boolean('is_required').default(false),
   orderIndex: integer('order_index').notNull(),
-  foreignKey: jsonb('foreign_key').$type<{tableId: number, columnName: string}>(), // Add this!
+  foreignKey: jsonb('foreign_key').$type<{tableId: number, columnName: string}>(),
   createdAt: timestamp('created_at').defaultNow(),
 })
 
 // User-created rows within tables
 export const rows = pgTable('rows', {
-  id: serial('id').primaryKey(),
-  tableId: integer('table_id').notNull().references(() => userTables.id),
-  data: jsonb('data').$type<Record<string, any>>(), // Store actual row data
+  id: varchar('id', { length: 36 }).primaryKey(), // UUID
+  tableId: varchar('table_id', { length: 36 }).notNull().references(() => userTables.id),
+  data: jsonb('data').$type<Record<string, any>>(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

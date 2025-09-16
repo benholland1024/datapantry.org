@@ -47,7 +47,6 @@ export default defineEventHandler(async (event) => {
     // Clear existing tables for this database (before saving new ones)
     await db.delete(userTables).where(eq(userTables.databaseId, databaseId))
 
-    console.log('Tables to save:', JSON.stringify(tables, null, 2))
 
     // Save new tables
     for (const table of tables) {
@@ -64,7 +63,6 @@ export default defineEventHandler(async (event) => {
 
       // Save columns
       if (table.columns && table.columns.length > 0) {
-        console.log(`Columns for table ${table.name}:`, table.columns)
 
         const columnValues = table.columns.map((col: any, index: number) => ({
           id: uuidv4(),
@@ -77,7 +75,6 @@ export default defineEventHandler(async (event) => {
           foreignKey: col.foreignKey || null 
         }))
 
-        console.log('About to insert columns:', JSON.stringify(columnValues, null, 2)) // Debug log
 
         await db.insert(userColumns).values(columnValues)
       }
