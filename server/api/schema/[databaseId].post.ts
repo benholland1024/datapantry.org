@@ -1,6 +1,12 @@
 import { eq, inArray } from 'drizzle-orm'
 import { db } from '../../database'
-import { userTables, userColumns, sessions, users } from '../../database/schema'
+import { 
+  userTables, 
+  userColumns, 
+  sessions, 
+  users, 
+  rows
+ } from '../../database/schema'
 import { v4 as uuidv4 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
@@ -37,8 +43,14 @@ export default defineEventHandler(async (event) => {
       .where(eq(userTables.databaseId, databaseId))
     const existingTableIds = existingTables.map(t => t.id)
 
-    //  Delete columns (to be replaced)
+    // Delete in the correct order: rows -> columns -> tables
     if (existingTableIds.length > 0) {
+      // First: Delete all rows that reference these tables
+      await db
+        .delete(rows)
+        .where(inArray(rows.tableId, existingTableIds))
+      
+      // Second: Delete columns 
       await db
         .delete(userColumns)
         .where(inArray(userColumns.tableId, existingTableIds))

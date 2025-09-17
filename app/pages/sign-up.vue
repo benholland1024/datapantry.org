@@ -83,7 +83,6 @@ async function sign_up() {
       }
     })
 
-    console.log('Response from /api/auth/signup:', response)
 
     localStorage.setItem('sessionId', response.sessionId)
 

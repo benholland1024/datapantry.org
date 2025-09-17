@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { db } from '../database'
-import { databases, sessions, users, tables } from '../database/schema'
+import { databases, sessions, users, userTables } from '../database/schema'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -41,11 +41,23 @@ export default defineEventHandler(async (event) => {
       .from(databases)
       .where(eq(databases.userId, sessionWithUser.userId))
 
-    // For now, return databases with empty tables array
-    // Later you can join with tables to get actual table data
-    const databasesWithTables = userDatabases.map(db => ({
-      ...db,
-      tables: [] // TODO: Join with tables when you implement them
+    // Get all tables for these databases
+    const databaseIds = userDatabases.map(db => db.id)
+    const allTables = databaseIds.length > 0 
+      ? await db
+          .select({
+            id: userTables.id,
+            name: userTables.name,
+            databaseId: userTables.databaseId,
+          })
+          .from(userTables)
+          .where(inArray(userTables.databaseId, databaseIds))
+      : []
+
+    // Group tables by database
+    const databasesWithTables = userDatabases.map(database => ({
+      ...database,
+      tables: allTables.filter(table => table.databaseId === database.id)
     }))
 
     return { 

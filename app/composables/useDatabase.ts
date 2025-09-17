@@ -11,8 +11,9 @@ export interface DatabaseStructure {
 }
 
 export interface TableStructure {
-  id: number
+  id: string
   name: string
+  databaseId: number
   columns: Array<{ name: string, datatype: string }>
   rows: Array<Record<string, any>>
 }
@@ -39,15 +40,12 @@ export function useDatabase() {
   // Set the current user AND fetch their databases.
   const setCurrentUser = (user: UserStructure) => {
     currentUser.value = user
-    console.log(currentUser.value)
 
     fetchUserDatabases()
   }
 
   const fetchUserDatabases = async () => {
     if (!process.client) return
-
-    console.log('Fetching user databases...')
 
     const sessionId = localStorage.getItem('sessionId')
     
@@ -102,12 +100,40 @@ export function useDatabase() {
     }
   }
 
-  const createTable = async (databaseId: number, tableName: string, columns: Array<{name: string, datatype: string}>) => {
-    // API call to create table
+  // Add table to a database in the sidebar
+  const addTableToDatabase = (databaseId: number, table: any) => {
+    const database = userDatabases.value.find(db => db.id === databaseId)
+    if (database) {
+      database.tables.push({
+        id: table.id,
+        name: table.name,
+        databaseId: databaseId,
+        columns: table.columns || [],
+        rows: table.rows || []
+      })
+    }
   }
 
-  const addRow = async (tableId: number, rowData: Record<string, any>) => {
-    // API call to add row
+  // Update table name in sidebar
+  const updateTableInDatabase = (databaseId: number, tableId: string, updates: any) => {
+    const database = userDatabases.value.find(db => db.id === databaseId)
+    if (database) {
+      const table = database.tables.find(t => t.id === tableId)
+      if (table && updates.name) {
+        table.name = updates.name
+      }
+    }
+  }
+
+  // Remove table from sidebar
+  const removeTableFromDatabase = (databaseId: number, tableId: string) => {
+    const database = userDatabases.value.find(db => db.id === databaseId)
+    if (database) {
+      const tableIndex = database.tables.findIndex(t => t.id === tableId)
+      if (tableIndex !== -1) {
+        database.tables.splice(tableIndex, 1)
+      }
+    }
   }
 
   return {
@@ -123,7 +149,8 @@ export function useDatabase() {
     signOut,
     fetchUserDatabases,
     createDatabase,
-    createTable,
-    addRow,
+    addTableToDatabase,
+    updateTableInDatabase,
+    removeTableFromDatabase,
   }
 }

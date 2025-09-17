@@ -83,14 +83,22 @@
 </template>
 
 <script setup lang="ts">
-import { useDatabase } from '@/composables/useDatabase'
 import TableDetails from '@/components/SchemaEditor/TableDetails.vue'
 import SchemaCanvas from '~/components/SchemaEditor/SchemaCanvas.vue'
 
 import { v4 as uuidv4 } from 'uuid'
 
 const route = useRoute()
-const { userDatabases, currentDatabase, loading } = useDatabase()
+
+import { useDatabase } from '@/composables/useDatabase'
+const { 
+  userDatabases, 
+  currentDatabase, 
+  loading,
+  addTableToDatabase,
+  updateTableInDatabase,
+  removeTableFromDatabase
+} = useDatabase()
 
 // Canvas state
 const zoomLevel = ref(1)
@@ -122,6 +130,12 @@ const loadSchema = async () => {
 // Save schema to database
 const saveSchema = async () => {
   saveStatus.value = 'saving'
+
+  if (!confirm("If you save, rows will be deleted. Is this ok?")) {
+    saveStatus.value = 'idle'
+    return
+  }
+
   try {
     const sessionId = localStorage.getItem('sessionId')
     
@@ -186,17 +200,18 @@ watch(currentDatabase, () => {
 
 
 const handleTableUpdate = (tableId: string, updates: any) => {
-  console.log('handleTableUpdate called with:', { tableId, updates })
-  
   const tableIndex = tables.value.findIndex(table => table.id === tableId)
   if (tableIndex !== -1) {
-    // Update the table with the new data
+    // Update local table
     Object.assign(tables.value[tableIndex], updates)
-    console.log('Updated table:', tables.value[tableIndex])
+    
+    // Update sidebar if name changed
+    if (updates.name) {
+      updateTableInDatabase(databaseId, tableId, updates)
+    }
   }
 }
 
-// Update createTable to trigger save
 const createTable = () => {
   const tableCount = tables.value.length
   const gridSize = 300
@@ -212,15 +227,22 @@ const createTable = () => {
       isRequired: true 
     }]
   }
-  tables.value.push(newTable)  //  Autosave triggered by watch
+  
+  tables.value.push(newTable) // autosave triggered by watch
+  
+  // Add to sidebar
+  addTableToDatabase(databaseId, newTable)
 }
 
 // Update canvas size on mount
 onMounted(() => {
   
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace' && selectedTable.value) {
-      // Prevent backspace from navigating back in browser
+    // Only delete if a table is selected and user isn't typing in an input
+    if (event.key === 'Backspace' && 
+        selectedTable.value && 
+        !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
+      
       event.preventDefault()
       deleteTable(selectedTable.value)
     }
@@ -258,6 +280,9 @@ const deleteTable = (tableId: string) => {
   if (index !== -1) {
     tables.value.splice(index, 1)
     selectedTable.value = null
+    
+    // Remove from sidebar
+    removeTableFromDatabase(databaseId, tableId)
   }
 }
 </script>

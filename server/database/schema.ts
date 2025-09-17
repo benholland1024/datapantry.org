@@ -50,11 +50,11 @@ export const userColumns = pgTable('user_columns', {
 
 // User-created rows within tables
 export const rows = pgTable('rows', {
-  id: varchar('id', { length: 36 }).primaryKey(), // UUID
+  id: varchar('id', { length: 36 }).primaryKey(),
   tableId: varchar('table_id', { length: 36 }).notNull().references(() => userTables.id),
   data: jsonb('data').$type<Record<string, any>>(),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(), 
 })
 
 export type User = typeof users.$inferSelect

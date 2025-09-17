@@ -11,7 +11,9 @@
       @mouseleave="endPan"
       @wheel="handleWheel"
     >
+      <!--------------------->
       <!-- Grid background -->
+      <!--------------------->
       <defs>
         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
           <rect width="20" height="20" fill="#0a0a0a" />
@@ -20,7 +22,40 @@
       </defs>
       <rect x="-10000" y="-10000" width="20000" height="20000" fill="url(#grid)" />
 
+      <!--------------------------------->
+      <!-- Connection points and lines -->
+      <!--------------------------------->
+      <g class="connections">
+        <!-- Connection lines -->
+        <line 
+          v-for="connection in connections" 
+          :key="connection.id"
+          :x1="connection.fromX" 
+          :y1="connection.fromY"
+          :x2="connection.toX" 
+          :y2="connection.toY"
+          stroke="#60a5fa" 
+          stroke-width="2"
+          opacity="0.8"
+        />
+
+        <!-- Connection points (semicircles) -->
+        <circle 
+          v-for="point in connectionPoints" 
+          :key="point.id"
+          :cx="point.x" 
+          :cy="point.y" 
+          r="8"
+          :fill="getConnectionPointColor(point)"
+          stroke="#1f2937"
+          stroke-width="1"
+        />
+        
+      </g>
+
+      <!------------>
       <!-- Tables -->
+      <!------------>
       <g v-for="table in props.tables" :key="table.id">
         <!-- Table container -->
         <g 
@@ -91,6 +126,7 @@
           </foreignObject>
         </g>
       </g>
+
     </svg>
   </div>
 </template>
@@ -148,6 +184,121 @@ const getColumnsHeight = (table: any) => {
   const minColumnsDisplay = 3
   const actualColumns = Math.max(table.columns.length, minColumnsDisplay)
   return actualColumns * columnHeight
+}
+
+// Helper to check if a primary key is connected
+const isPrimaryKeyConnected = (tableId: string, columnName: string) => {
+  return props.tables.some(table => 
+    table.columns.some((column: any) => 
+      column.datatype === 'Foreign Key' && 
+      column.foreignKey?.tableId === tableId && 
+      column.foreignKey?.columnName === columnName
+    )
+  )
+}
+
+// Connection point calculation
+const getConnectionPoints = () => {
+  const points: Array<{
+    id: string
+    x: number
+    y: number
+    type: 'primary' | 'foreign'
+    tableId: string
+    columnName: string
+    isConnected?: boolean 
+  }> = []
+
+  props.tables.forEach(table => {
+    table.columns.forEach((column: any, columnIndex: number) => {
+      const columnY = table.y + 48 + (columnIndex * 24) + 8 // Center of column row
+      
+      // Primary key connection point (left side)
+      if (column.constraint === 'primary') {
+        points.push({
+          id: `pk-${table.id}-${column.name}`,
+          x: table.x,
+          y: columnY,
+          type: 'primary',
+          tableId: table.id,
+          columnName: column.name,
+          isConnected: isPrimaryKeyConnected(table.id, column.name) // Check if connected
+        })
+      }
+      
+      // Foreign key connection point (right side)
+      if (column.datatype === 'Foreign Key') {
+        points.push({
+          id: `fk-${table.id}-${column.name}`,
+          x: table.x + 200, // right of table edge (table width is 200)
+          y: columnY,
+          type: 'foreign',
+          tableId: table.id,
+          columnName: column.name,
+          isConnected: true // always connected by definition
+        })
+      }
+    })
+  })
+
+  return points
+}
+const connectionPoints = computed(() => getConnectionPoints())
+
+// Calculate connection lines
+const getConnections = () => {
+  const connections: Array<{
+    id: string
+    fromX: number
+    fromY: number
+    toX: number
+    toY: number
+  }> = []
+
+  const connectionPoints = getConnectionPoints()
+
+  props.tables.forEach(table => {
+    table.columns.forEach((column: any, columnIndex: number) => {
+      if (column.datatype === 'Foreign Key' && column.foreignKey) {
+        // Find the FK connection point (right side of this table)
+        const fkPoint = connectionPoints.find(p => 
+          p.tableId === table.id && 
+          p.columnName === column.name && 
+          p.type === 'foreign'
+        )
+
+        // Find the PK connection point (left side of referenced table)
+        const pkPoint = connectionPoints.find(p => 
+          p.tableId === column.foreignKey.tableId && 
+          p.columnName === column.foreignKey.columnName && 
+          p.type === 'primary'
+        )
+
+        if (fkPoint && pkPoint) {
+          connections.push({
+            id: `connection-${table.id}-${column.name}`,
+            fromX: fkPoint.x,
+            fromY: fkPoint.y,
+            toX: pkPoint.x,
+            toY: pkPoint.y
+          })
+        }
+      }
+    })
+  })
+
+  return connections
+}
+const connections = computed(() => getConnections())
+
+// Color logic for connection points. Gold for PK if connected, green for FK, gray otherwise
+const getConnectionPointColor = (point: any) => {
+  if (point.type === 'foreign') {
+    return '#10b981' // Green for foreign keys (always connected)
+  } else if (point.type === 'primary') {
+    return point.isConnected ? '#fbbf24' : '#6b7280' // Gold if connected, gray if not
+  }
+  return '#6b7280' // Default gray
 }
 
 // Table selection

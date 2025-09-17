@@ -206,32 +206,25 @@ const updateColumnName = (index: number, value: string) => {
 }
 
 //  Update column datatype. If FK, set foreignKey property
-const updateColumnDatatype = (index: number, value: string) => {
-  console.log('updateColumnDatatype called with:', { index, value })
-  
+const updateColumnDatatype = (index: number, value: string) => {  
   if (selectedTableData.value?.columns[index]) {
     const column = selectedTableData.value.columns[index]
-    console.log('Column before update:', JSON.stringify(column, null, 2))
     
     if (value.startsWith('FK - ')) {
       // Find the referenced table
       const tableName = value.replace('FK - ', '')
-      console.log('Looking for table named:', tableName)
       
       const referencedTable = props.tables.find(table => table.name === tableName)
-      console.log('Found referenced table:', referencedTable)
       
       if (referencedTable) {
         // Find the primary key column
         const primaryKeyColumn = referencedTable.columns.find((col:any) => col.constraint === 'primary')
-        console.log('Found primary key column:', primaryKeyColumn)
         
         column.datatype = 'Foreign Key'
         column.foreignKey = {
           tableId: referencedTable.id,
           columnName: primaryKeyColumn?.name || 'id'
         }
-        console.log('Column after FK setup:', JSON.stringify(column, null, 2))
         
         // Clear primary key constraint (FK can't be PK)
         if (column.constraint === 'primary') {
@@ -243,26 +236,17 @@ const updateColumnDatatype = (index: number, value: string) => {
       column.datatype = value
       delete column.foreignKey
     }
-    
-    console.log('Final column state:', JSON.stringify(column, null, 2))
-    console.log('About to emit updateTable with columns:', selectedTableData.value.columns)
-    
+        
     emit('updateTable', props.selectedTable!, { columns: selectedTableData.value.columns })
   }
 }
 
 // Helper to get display value for datatype dropdown
 const getColumnDatatypeDisplayValue = (column: any) => {
-  console.log('props.tables', props.tables)
-  console.log('column:', column)
-  console.log(column.datatype, column.foreignKey)
+  
   if (column.datatype === 'Foreign Key' && column.foreignKey) {
-    console.log('FK Column:', column)
-    console.log('Looking for table ID:', column.foreignKey.tableId)
-    console.log('Available tables:', props.tables.map(t => ({ id: t.id, name: t.name })))
     
     const referencedTable = props.tables.find(t => t.id === column.foreignKey.tableId)
-    console.log('Found referenced table:', referencedTable)
     
     return referencedTable ? `FK - ${referencedTable.name}` : 'Foreign Key'
   }

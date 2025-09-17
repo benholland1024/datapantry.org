@@ -83,8 +83,6 @@ async function sign_in() {
       }
     })
 
-    console.log('Sign-in successful:', response)
-
     // Store session in localStorage
     localStorage.setItem('sessionId', response.sessionId)
     
