@@ -2,6 +2,7 @@
   <div class="bg-theme-bg w-screen h-screen">
     <UApp>  <!--  Needed for tooltip  -->
       <NuxtRouteAnnouncer />
+      
       <!-- Top menu navbar, with sign in / sign out / user options-->
       <div class="w-screen h-16 bg-theme-bg-darker-2 flex items-center gap-2 justify-around px-4">
         <NuxtLink to="/">

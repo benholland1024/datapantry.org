@@ -104,6 +104,101 @@
       >
         Delete Table
       </UButton>
+      <UModal
+        title="Confirm changes"
+        description="Save changes to the table schema"
+        :open="openImpactModal"
+        :close="{
+          color: 'primary',
+          variant: 'outline',
+          class: 'rounded-full'
+        }"
+      >
+        <UButton 
+          v-if="columnChanges.length"
+          color="success" 
+          variant="outline" 
+          size="sm"
+          @click="getChangeImpact"
+        >
+          Save changes
+        </UButton>
+
+        <template #content>
+          <div class="p-4 space-y-4" v-if="loadingImpact">
+            <div class="flex items-center gap-4">
+              <USkeleton class="h-12 w-12 rounded-full" />
+
+              <div class="grid gap-2">
+                <USkeleton class="h-4 w-[250px]" />
+                <USkeleton class="h-4 w-[200px]" />
+              </div>
+            </div>
+          </div>
+          <div class="p-4 space-y-4" v-else>
+            <h3 class="text-lg font-semibold">
+              Save changes to table <span class="text-blue-400">{{selectedTableData.name}}</span>?
+            </h3>
+            <p class="text-sm text-gray-400">
+              Are you sure you want to save these changes to the table?
+            </p>
+            <div v-for="change in columnChanges" :key="change.id" class="p-2 border border-gray-600 rounded text-sm">
+              <div v-if="change.type === 'update'">
+                <p class="font-semibold">
+                  Column with name <span class="text-yellow-400">"{{change.name}}"</span> updated:
+                </p>
+                <ul class="text-sm list-disc list-outside ml-5" v-if="change.changes">
+                  <li v-if="change.changes.name">
+                    Name: "{{ change.changes.name.old }}" → "{{ change.changes.name.new }}"
+                    <div class="text-xs text-gray-400 italic">{{ change.changes.name.msg }}</div>
+                  </li>
+                  <li v-if="change.changes.datatype">
+                    Datatype: "{{ change.changes.datatype.old }}" → "{{ change.changes.datatype.new }}"
+                    <div class="text-xs text-gray-400 italic">{{ change.changes.datatype.msg }}</div>
+                  </li>
+                  <li v-if="change.changes.isRequired">
+                    Required: "{{ change.changes.isRequired.old }}" → "{{ change.changes.isRequired.new }}"
+                    <div class="text-xs text-gray-400 italic">{{ change.changes.isRequired.msg }}</div>
+                  </li>
+                  <li v-if="change.changes.constraint">
+                    Constraint: "{{ change.changes.constraint.old }}" → "{{ change.changes.constraint.new }}"
+                    <div class="text-xs text-gray-400 italic">{{ change.changes.constraint.msg }}</div>
+                  </li>
+                </ul>
+              </div>
+              <div v-else-if="change.type === 'added'">
+                <div class="text-sm text-green-400">Column added (ID: {{ change.id }})</div>
+                <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
+              </div>
+              <div v-else-if="change.type === 'deleted'">
+                <div class="text-sm text-red-400">Column deleted (ID: {{ change.id }})</div>
+                <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
+              </div>
+            </div>
+            <div>
+              {{ impact.rowCount }} rows will be affected. 
+            </div>
+            <div class="flex justify-end gap-2">
+              <UButton 
+                color="neutral"
+                variant="ghost" 
+                size="sm"
+                @click="openImpactModal = false"
+              >
+                Cancel
+              </UButton>
+              <UButton 
+                color="primary" 
+                size="sm"
+                @click="confirmChanges"
+              >
+                Confirm
+              </UButton>              
+            </div>
+          </div>
+        </template>
+      </UModal>
+      
       <div class="flex-1"></div>
       <UButton 
         variant="ghost" 
@@ -132,6 +227,16 @@ const emit = defineEmits<{
   deleteTable: [tableId: string] 
 }>()
 
+const columnsSnapshot = ref([])
+const loadingImpact = ref<boolean>(false)
+const impact = ref<any>({})
+const openImpactModal = ref<boolean>(false)
+
+
+//                       //
+//  Computed properties  //
+//                       //
+
 // Datatype options: [String, Number, + FK - other tables...]
 const datatypeOptions = computed(() => {
   const baseOptions = [
@@ -151,13 +256,120 @@ const datatypeOptions = computed(() => {
   return [...baseOptions, ...fkOptions]
 })
 
-// Computed
+// Selected table data
 const selectedTableData = computed(() => {
   if (!props.selectedTable) return null
   return props.tables.find(table => table.id === props.selectedTable) || null
 })
 
-// Helper functions
+const columnChanges = computed(() => {
+  if (!selectedTableData.value) return []
+  
+  const changes = []
+  
+  const oldColumns = <any>columnsSnapshot.value || []
+  const newColumns = selectedTableData.value.columns || []
+  
+  for (let i = 0; i < newColumns.length; i++) {
+    const columnId = newColumns[i].id
+    
+    // Check if the column has changed
+    let oldColumn = oldColumns.find((column:any) => column.id === columnId)
+    let change: { 
+      name?: { old: string; new: string, msg: string },
+      datatype?: { old: string; new: string, msg: string },
+      isRequired?: { old: boolean; new: boolean, msg: string },
+      constraint?: { old: string; new: string, msg: string }
+    } = {};
+    let madeChange = false;
+    if (oldColumn) {
+      if (newColumns[i].name !== oldColumn.name) {
+        madeChange = true;
+        change.name = { 
+          old: oldColumn.name, 
+          new: newColumns[i].name,
+          msg: `All row data in column "${oldColumn.name}" will be moved to column "${newColumns[i].name}".`
+        }
+      }
+      if (newColumns[i].datatype !== oldColumn.datatype) {
+        madeChange = true;
+        change.datatype = { 
+          old: oldColumn.datatype, 
+          new: newColumns[i].datatype,
+          msg: `Data in column "${oldColumn.name}" will be converted from type "${oldColumn.datatype}" to "${newColumns[i].datatype}". This may cause data loss if the types are incompatible.`
+        }
+      }
+      if (newColumns[i].isRequired !== oldColumn.isRequired) {
+        madeChange = true;
+        change.isRequired = { 
+          old: oldColumn.isRequired, 
+          new: newColumns[i].isRequired,
+          msg: newColumns[i].isRequired 
+            ? `Column "${oldColumn.name}" will be set to required. Existing rows with null/empty values in this column will need to be updated before saving.` 
+            : `Column "${oldColumn.name}" will be set to optional.`
+        }
+      }
+      if (newColumns[i].constraint !== oldColumn.constraint) {
+        madeChange = true;
+        change.constraint = { 
+          old: oldColumn.constraint, 
+          new: newColumns[i].constraint,
+          msg: newColumns[i].constraint === 'primary' 
+            ? `Column "${oldColumn.name}" will be set as the primary key. Existing primary key constraints will be removed.` 
+            : oldColumn.constraint === 'primary' 
+              ? `Column "${oldColumn.name}" will no longer be the primary key.`
+              : `Constraint on column "${oldColumn.name}" will be changed from "${oldColumn.constraint}" to "${newColumns[i].constraint}".`
+        }
+      }
+      if (madeChange) {
+        changes.push({
+          id: columnId,
+          name: oldColumn.name,
+          type: "update",
+          changes: change
+        })
+      }
+    } else {
+      changes.push({
+        id: columnId,
+        name: newColumns[i].name,
+        type: "added",
+        msg: `New column "${newColumns[i].name}" will be added to the table.`
+      })
+    }
+  }
+  
+  // Check for deleted columns
+  for (let i = 0; i < oldColumns.length; i++) {
+    if (!newColumns.find((column: any) => column.id === oldColumns[i].id)) {
+      changes.push({
+        id: oldColumns[i].id,
+        name: oldColumns[i].name,
+        type: "deleted",
+        msg: `Column "${oldColumns[i].name}" will be deleted. All data in this column will be lost.`
+      })
+    }
+  }
+  
+  return changes
+})
+
+//            //
+//  Watchers  //
+//            //
+
+// Take a snapshot of columns for change detection
+watch(() => props.selectedTable, () => {
+  if (selectedTableData.value) {
+    columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
+  } else {
+    columnsSnapshot.value = []
+  }
+})
+
+//                    //
+//  Helper functions  //
+//                    //
 const getConstraintIcon = (constraint: string) => {
   if (constraint === 'primary') return 'i-lucide-key'
   else if (constraint === 'unique') return 'i-lucide-fingerprint'
@@ -305,4 +517,51 @@ const deleteTable = () => {
     emit('deleteTable', props.selectedTable)
   }
 }
+
+//  Open the impace modal, showing potentially destructive changes
+const getChangeImpact = async () => {
+  try {
+    const sessionId = localStorage.getItem('sessionId')
+    loadingImpact.value = true
+    openImpactModal.value = true
+    
+    const response = await $fetch(`/api/table/${selectedTableData.value.id}/impact?sessionId=${sessionId}`, {
+      method: 'GET',
+    })
+
+    console.log('Impact response:', response)
+
+    loadingImpact.value = false
+    impact.value = response
+    
+    
+    // setTimeout(() => { saveStatus.value = 'idle' }, 2000)
+  } catch (error) {
+    console.error('Save failed:', error)
+  }
+}
+
+const confirmChanges = () => {
+  try {
+    const sessionId = localStorage.getItem('sessionId')
+    openImpactModal.value = false
+    
+    $fetch(`/api/table/${selectedTableData.value.id}?sessionId=${sessionId}`, {
+      method: 'PUT',
+      body: { 
+        columns: selectedTableData.value.columns,
+        preserveData: true // TODO: make this an option in the UI
+      }
+    }).then(() => {
+      impact.value = {}
+      columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
+    })
+    
+  } catch (error) {
+    console.error('Save failed:', error)
+  }
+}
+
+
+
 </script>

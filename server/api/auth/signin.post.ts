@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
-import { db } from '../../database'
-import { users, sessions } from '../../database/schema'
+import { db } from '../../postgresDB'
+import { users, sessions } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {

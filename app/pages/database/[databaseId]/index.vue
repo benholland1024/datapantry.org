@@ -1,3 +1,6 @@
+<!--------------------->
+<!--  Schema editor  -->
+<!--------------------->
 <template>
   <div class="h-[calc(100vh-4rem)] w-full">
     <div v-if="loading" class="text-center py-8">
@@ -117,7 +120,7 @@ const loadSchema = async () => {
   isLoading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch(`/api/schema/${databaseId}?sessionId=${sessionId}`)
+    const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`)
     tables.value = response.tables
   } catch (error) {
     console.error('Failed to load schema:', error)
@@ -131,11 +134,6 @@ const loadSchema = async () => {
 const saveSchema = async () => {
   saveStatus.value = 'saving'
 
-  if (!confirm("If you save, rows will be deleted. Is this ok?")) {
-    saveStatus.value = 'idle'
-    return
-  }
-
   try {
     const sessionId = localStorage.getItem('sessionId')
     
@@ -145,7 +143,7 @@ const saveSchema = async () => {
       y: Math.round(table.y)
     }))
     
-    await $fetch(`/api/schema/${databaseId}`, {
+    await $fetch(`/api/database/${databaseId}`, {
       method: 'POST',
       body: { tables: tablesToSave, sessionId }
     })
@@ -183,13 +181,19 @@ onBeforeUnmount(() => {
   }
 })
 
-// Watch for changes.  If tables change, trigger debounce.
-watch(tables, () => {
-  if (tables.value.length > 0) {
-    saveStatus.value = 'editing' // Show 'editing' while waiting for debounce
+// Autosave only when safe properties change. 
+watch(() => tables.value.map(t => ({ name: t.name, x: t.x, y: t.y })), () => {
+  saveStatus.value = 'editing'
+  debouncedSave()
+}, { deep: true })
+
+// Separate autosave watcher for array length changes (table additions)
+watch(() => tables.value.length, (newLength, oldLength) => {
+  if (newLength > oldLength) {
+    saveStatus.value = 'editing'
     debouncedSave()
   }
-}, { deep: true })
+})
 
 // Load schema when database is available
 watch(currentDatabase, () => {

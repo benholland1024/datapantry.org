@@ -1,12 +1,25 @@
+/**
+ * POST /api/database/:databaseId
+ * Saves the schema (table names + x and y positions) for a specific database.
+ * 
+ * If table columns changed, don't use this, use:
+ *  -  GET /api/table/:tableId/impact to get # rows affected, col differences, etc
+ *  -  PUT /api/table/:tableId , using the preserveData flag if needed
+ * 
+ * If tables are being deleted, use:
+ *  -  GET /api/table/:tableId/impact 
+ *  -  DELETE /api/table/:tableId
+ */
+
 import { eq, inArray } from 'drizzle-orm'
-import { db } from '../../database'
+import { db } from '../../postgresDB'
 import { 
   userTables, 
   userColumns, 
   sessions, 
   users, 
   rows
- } from '../../database/schema'
+ } from '../../postgresDB/schema'
 import { v4 as uuidv4 } from 'uuid'
 
 export default defineEventHandler(async (event) => {
@@ -42,6 +55,12 @@ export default defineEventHandler(async (event) => {
       .from(userTables)
       .where(eq(userTables.databaseId, databaseId))
     const existingTableIds = existingTables.map(t => t.id)
+
+    //  Get existing rows that reference these tables
+    const existingRows = await db
+      .select()
+      .from(rows)
+      .where(inArray(rows.tableId, existingTableIds))
 
     // Delete in the correct order: rows -> columns -> tables
     if (existingTableIds.length > 0) {
@@ -91,6 +110,13 @@ export default defineEventHandler(async (event) => {
         await db.insert(userColumns).values(columnValues)
       }
     }
+
+    // Save rows
+    if (existingRows.length > 0) {
+
+      await db.insert(rows).values(existingRows)
+    }
+
 
     // After saving all tables, return the updated schema
     const savedTables = await db

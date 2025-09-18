@@ -59,7 +59,7 @@ export function useDatabase() {
     
     try {
       const response = await $fetch<any>(
-        `/api/databases?sessionId=${sessionId}`,
+        `/api/database?sessionId=${sessionId}`,
         { method: 'GET' }
       )
       userDatabases.value = response.databases
@@ -85,7 +85,7 @@ export function useDatabase() {
     }
   
     try {
-      const response = await $fetch<any>('/api/databases', {
+      const response = await $fetch<any>('/api/database', {
         method: 'POST',
         body: { name, sessionId }
       })

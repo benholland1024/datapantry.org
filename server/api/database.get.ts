@@ -1,6 +1,12 @@
+/**
+ * GET /api/database
+ * Fetch all databases for the authenticated user, including their tables,
+ *   but NOT the columns within those tables.
+ */
+
 import { eq, inArray } from 'drizzle-orm'
-import { db } from '../database'
-import { databases, sessions, users, userTables } from '../database/schema'
+import { db } from '../postgresDB'
+import { databases, sessions, users, userTables } from '../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {

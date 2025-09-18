@@ -1,6 +1,11 @@
+/**
+ * GET /api/database/[databaseId]?sessionId=...
+ * Returns the tables and columns for the specified database.
+ */
+
 import { eq, inArray } from 'drizzle-orm'
-import { db } from '../../database'
-import { userTables, userColumns, sessions, users } from '../../database/schema'
+import { db } from '../../postgresDB'
+import { userTables, userColumns, sessions, users } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -55,6 +60,7 @@ export default defineEventHandler(async (event) => {
         .filter(col => col.tableId === table.id)
         .sort((a, b) => a.orderIndex - b.orderIndex)
         .map(col => ({
+          id: col.id,
           name: col.name,
           datatype: col.datatype,
           constraint: col.constraint || 'none',

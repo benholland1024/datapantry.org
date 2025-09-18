@@ -1,6 +1,6 @@
 import { eq, gt } from 'drizzle-orm'
-import { db } from '../../database'
-import { sessions, users } from '../../database/schema'
+import { db } from '../../postgresDB'
+import { sessions, users } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {

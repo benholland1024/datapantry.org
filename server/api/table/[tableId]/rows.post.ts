@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
-import { db } from '../../../database'
-import { userTables, rows, sessions, users } from '../../../database/schema'
+import { db } from '../../../postgresDB'
+import { userTables, rows, sessions, users } from '../../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {

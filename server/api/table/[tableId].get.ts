@@ -1,6 +1,12 @@
+/**
+ * GET /api/table/:tableId
+ * Responds with a table, its columns, and its rows.
+ * 
+ */
+
 import { eq } from 'drizzle-orm'
-import { db } from '../../database'
-import { userTables, userColumns, rows, sessions, users } from '../../database/schema'
+import { db } from '../../postgresDB'
+import { userTables, userColumns, rows, sessions, users } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {
