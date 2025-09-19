@@ -142,6 +142,7 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   selectTable: [tableId: string]
+  deselectTable: []
   updateTable: [tableId: string, updates: any]
   createTable: []
   updateZoom: [zoomLevel: number]
@@ -312,6 +313,7 @@ const startPan = (event: MouseEvent) => {
   isPanning.value = true
   lastPanX.value = event.clientX
   lastPanY.value = event.clientY
+  emit('deselectTable') // Deselect any selected table when starting to pan
 }
 
 const handlePan = (event: MouseEvent) => {

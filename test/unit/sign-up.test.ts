@@ -1,12 +1,18 @@
 
 
 
+// Add type declaration for navigateTo on globalThis
+declare global {
+  // eslint-disable-next-line no-var
+  var navigateTo: (path: string) => void;
+}
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import SignUp from '../../pages/sign-up.vue'
+import SignUp from '../../app/pages/sign-up.vue'
 
 // Mock composable
-vi.mock('../composables/useDatabase', () => ({
+vi.mock('../../app/composables/useDatabase', () => ({
   useDatabase: () => ({
     setCurrentUser: vi.fn()
   })

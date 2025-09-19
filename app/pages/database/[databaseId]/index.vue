@@ -64,6 +64,7 @@
         :selected-table="selectedTable"
         :zoom-level="zoomLevel"
         @select-table="(tableId) => selectedTable = tableId"
+        @deselect-table="() => selectedTable = null"
         @update-table="handleTableUpdate"
         @create-table="createTable"
         @update-zoom="(zoom) => zoomLevel = zoom"

@@ -11,7 +11,7 @@ export default defineConfig({
         plugins: [vue()],
         test: {
           name: 'unit',
-          include: ['app/test/{e2e,unit}/*.{test,spec}.ts'],
+          include: ['test/{e2e,unit}/*.{test,spec}.ts'],
           environment: 'happy-dom',
         },
       },
@@ -19,7 +19,7 @@ export default defineConfig({
         plugins: [vue()],
         test: {
           name: 'nuxt',
-          include: ['app/test/nuxt/*.{test,spec}.ts'],
+          include: ['test/nuxt/*.{test,spec}.ts'],
           environment: 'nuxt',
         },
       }),
