@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 export interface UserStructure {
   id: number
   username: string

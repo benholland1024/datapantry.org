@@ -57,8 +57,8 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { useDatabase } from '@/composables/useDatabase'
-import type { UserStructure } from '@/composables/useDatabase'
+import { useDatabase } from '../composables/useDatabase'
+import type { UserStructure } from '../composables/useDatabase'
 
 const { setCurrentUser } = useDatabase()
 

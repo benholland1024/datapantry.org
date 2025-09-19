@@ -7,7 +7,7 @@ TOMORROW:
  - [ ] Once that's figured out, get /api/table/[tableId].put.ts to
 save column changes & retain rows. 
 
-Then, get it to do the crazy row updates you want it to do. 
+ - [ ] Then, get it to do the crazy row updates you want it to do. 
 
 ///
 
