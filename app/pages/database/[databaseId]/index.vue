@@ -142,6 +142,8 @@ const saveSchema = async () => {
       x: Math.round(table.x),
       y: Math.round(table.y)
     }))
+
+    console.log(" > Saving schema with tables:", tablesToSave)
     
     await $fetch(`/api/database/${databaseId}`, {
       method: 'POST',
@@ -225,12 +227,14 @@ const createTable = () => {
     x: 100 + (tableCount % 3) * gridSize,
     y: 100 + Math.floor(tableCount / 3) * 200,
     columns: [{ 
+      id: uuidv4(),
       name: 'id', 
       datatype: 'Number', 
       constraint: 'primary', 
       isRequired: true 
     }]
   }
+  console.log("New table column id:", newTable?.columns?.[0] )
   
   tables.value.push(newTable) // autosave triggered by watch
   

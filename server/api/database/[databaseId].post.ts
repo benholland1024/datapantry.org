@@ -54,13 +54,20 @@ export default defineEventHandler(async (event) => {
       .select({ id: userTables.id })
       .from(userTables)
       .where(eq(userTables.databaseId, databaseId))
-    const existingTableIds = existingTables.map(t => t.id)
+    const existingTableIds = <Array<string>> existingTables.map(t => t.id)
+    console.log(' > Existing table ids:', existingTableIds)
 
     //  Get existing rows that reference these tables
     const existingRows = await db
       .select()
       .from(rows)
       .where(inArray(rows.tableId, existingTableIds))
+
+    //  Get existing columns that reference these tables
+    const existingColumns = await db
+      .select()
+      .from(userColumns)
+      .where(inArray(userColumns.tableId, existingTableIds))
 
     // Delete in the correct order: rows -> columns -> tables
     if (existingTableIds.length > 0) {
@@ -92,11 +99,10 @@ export default defineEventHandler(async (event) => {
         })
         .returning({ id: userTables.id })
 
-      // Save columns
-      if (table.columns && table.columns.length > 0) {
-
+      //  Iff the table is new, save NEW columns. This applies to the "default" column.
+      if (!existingTableIds.includes(table.id) && table.columns && table.columns.length > 0) {
         const columnValues = table.columns.map((col: any, index: number) => ({
-          id: uuidv4(),
+          id: table.columns[0].id,
           tableId: table.id,
           name: col.name,
           datatype: col.datatype,
@@ -106,14 +112,20 @@ export default defineEventHandler(async (event) => {
           foreignKey: col.foreignKey || null 
         }))
 
-
         await db.insert(userColumns).values(columnValues)
+      } 
+
+      else if (existingTableIds.includes(table.id) && table.columns && table.columns.length > 0) {
+        // If the table existed before, we need to re-save existing columns that were not deleted.
+        const columnsToReinsert = existingColumns.filter(c => c.tableId === table.id)
+        if (columnsToReinsert.length > 0) {
+          await db.insert(userColumns).values(columnsToReinsert)
+        }
       }
     }
 
     // Save rows
     if (existingRows.length > 0) {
-
       await db.insert(rows).values(existingRows)
     }
 

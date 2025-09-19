@@ -142,37 +142,39 @@
             <p class="text-sm text-gray-400">
               Are you sure you want to save these changes to the table?
             </p>
-            <div v-for="change in columnChanges" :key="change.id" class="p-2 border border-gray-600 rounded text-sm">
-              <div v-if="change.type === 'update'">
-                <p class="font-semibold">
-                  Column with name <span class="text-yellow-400">"{{change.name}}"</span> updated:
-                </p>
-                <ul class="text-sm list-disc list-outside ml-5" v-if="change.changes">
-                  <li v-if="change.changes.name">
-                    Name: "{{ change.changes.name.old }}" → "{{ change.changes.name.new }}"
-                    <div class="text-xs text-gray-400 italic">{{ change.changes.name.msg }}</div>
-                  </li>
-                  <li v-if="change.changes.datatype">
-                    Datatype: "{{ change.changes.datatype.old }}" → "{{ change.changes.datatype.new }}"
-                    <div class="text-xs text-gray-400 italic">{{ change.changes.datatype.msg }}</div>
-                  </li>
-                  <li v-if="change.changes.isRequired">
-                    Required: "{{ change.changes.isRequired.old }}" → "{{ change.changes.isRequired.new }}"
-                    <div class="text-xs text-gray-400 italic">{{ change.changes.isRequired.msg }}</div>
-                  </li>
-                  <li v-if="change.changes.constraint">
-                    Constraint: "{{ change.changes.constraint.old }}" → "{{ change.changes.constraint.new }}"
-                    <div class="text-xs text-gray-400 italic">{{ change.changes.constraint.msg }}</div>
-                  </li>
-                </ul>
-              </div>
-              <div v-else-if="change.type === 'added'">
-                <div class="text-sm text-green-400">Column added (ID: {{ change.id }})</div>
-                <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
-              </div>
-              <div v-else-if="change.type === 'deleted'">
-                <div class="text-sm text-red-400">Column deleted (ID: {{ change.id }})</div>
-                <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
+            <div class="max-h-64 overflow-y-auto space-y-2">
+              <div v-for="change in columnChanges" :key="change.id" class="p-2 border border-gray-600 rounded text-sm">
+                <div v-if="change.type === 'update'">
+                  <p class="font-semibold">
+                    Column with name <span class="text-yellow-400">"{{change.name}}"</span> updated:
+                  </p>
+                  <ul class="text-sm list-disc list-outside ml-5" v-if="change.changes">
+                    <li v-if="change.changes.name">
+                      Name: "{{ change.changes.name.old }}" → "{{ change.changes.name.new }}"
+                      <div class="text-xs text-gray-400 italic">{{ change.changes.name.msg }}</div>
+                    </li>
+                    <li v-if="change.changes.datatype">
+                      Datatype: "{{ change.changes.datatype.old }}" → "{{ change.changes.datatype.new }}"
+                      <div class="text-xs text-gray-400 italic">{{ change.changes.datatype.msg }}</div>
+                    </li>
+                    <li v-if="change.changes.isRequired">
+                      Required: "{{ change.changes.isRequired.old }}" → "{{ change.changes.isRequired.new }}"
+                      <div class="text-xs text-gray-400 italic">{{ change.changes.isRequired.msg }}</div>
+                    </li>
+                    <li v-if="change.changes.constraint">
+                      Constraint: "{{ change.changes.constraint.old }}" → "{{ change.changes.constraint.new }}"
+                      <div class="text-xs text-gray-400 italic">{{ change.changes.constraint.msg }}</div>
+                    </li>
+                  </ul>
+                </div>
+                <div v-else-if="change.type === 'added'">
+                  <div class="text-sm text-green-400">Column added (ID: {{ change.id }})</div>
+                  <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
+                </div>
+                <div v-else-if="change.type === 'deleted'">
+                  <div class="text-sm text-red-400">Column deleted (ID: {{ change.id }})</div>
+                  <p class="text-xs text-gray-400 italic">{{ change.msg }}</p>
+                </div>
               </div>
             </div>
             <div>
@@ -545,14 +547,21 @@ const confirmChanges = () => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     openImpactModal.value = false
+
+    console.log('Saving changes:', {
+      columnChanges: columnChanges.value,
+      columns: selectedTableData.value.columns
+    })
     
     $fetch(`/api/table/${selectedTableData.value.id}?sessionId=${sessionId}`, {
       method: 'PUT',
       body: { 
+        columnChanges: columnChanges.value,
         columns: selectedTableData.value.columns,
         preserveData: true // TODO: make this an option in the UI
       }
     }).then(() => {
+      console.log("Changes saved successfully")
       impact.value = {}
       columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
     })

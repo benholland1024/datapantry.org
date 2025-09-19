@@ -1,3 +1,10 @@
+/**
+ * POST /api/database?sessionId=...
+ * Create a new database for the authenticated user.
+ * Expects: { name: string, sessionId: string }
+ * Returns: { success: boolean, database: { id, name, createdAt, tables: [] } }
+ */
+
 import { eq } from 'drizzle-orm'
 import { db } from '../postgresDB'
 import { databases, sessions, users } from '../postgresDB/schema'
