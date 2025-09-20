@@ -531,8 +531,6 @@ const getChangeImpact = async () => {
       method: 'GET',
     })
 
-    console.log('Impact response:', response)
-
     loadingImpact.value = false
     impact.value = response
     
@@ -547,11 +545,6 @@ const confirmChanges = () => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     openImpactModal.value = false
-
-    console.log('Saving changes:', {
-      columnChanges: columnChanges.value,
-      columns: selectedTableData.value.columns
-    })
     
     $fetch(`/api/table/${selectedTableData.value.id}?sessionId=${sessionId}`, {
       method: 'PUT',
@@ -561,7 +554,6 @@ const confirmChanges = () => {
         preserveData: true // TODO: make this an option in the UI
       }
     }).then(() => {
-      console.log("Changes saved successfully")
       impact.value = {}
       columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
     })

@@ -3,6 +3,35 @@
 <!--------------------->
 <template>
   <div class="h-[calc(100vh-4rem)] w-full">
+    <UModal 
+      :open="openDeleteImpactModal" 
+      :title="deleteImpact.rowCount ? 'Delete table? Rows will be lost!' : 'Delete table?'"
+      :closeable="true"
+      size="lg"
+    >
+      <template #body>
+        <div v-if="loadingDeleteImpact" class="text-center py-8">
+          <div>Loading impact...</div>
+        </div>
+        <div v-else>
+          <div v-if="deleteImpact.error" class="text-red-500">
+            Error loading impact: {{ deleteImpact.error }}
+          </div>
+          <div v-else>
+            <div>
+              Deleting <span class="font-bold">{{ tables.find(table => table.id === selectedDeleteTableId)?.name || 'this table' }}</span> will delete {{ deleteImpact.rowCount }} rows.
+            </div>
+            <div class="flex gap-4 mt-4">
+              <UButton @click="deleteTable()" color="error">Confirm Delete</UButton>
+              <UButton color="secondary" @click="openDeleteImpactModal = false" variant="ghost">
+                Cancel
+              </UButton>
+            </div>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
     <div v-if="loading" class="text-center py-8">
       <div>Loading database...</div>
     </div>
@@ -75,7 +104,7 @@
         :tables="tables"
         @close="selectedTable = null"
         @update-table="handleTableUpdate"
-        @delete-table="deleteTable"
+        @delete-table="getDeleteImpact"
       />
       
     </div>
@@ -114,6 +143,12 @@ const tables = ref<any[]>([])
 const isLoading = ref(false)
 const saveStatus = ref<'idle' | 'editing' | 'saving' | 'saved' | 'error'>('idle')
 
+//  Delete impact modal
+const openDeleteImpactModal = ref(false)
+const loadingDeleteImpact = ref(false)
+const deleteImpact = ref<any>({})
+const selectedDeleteTableId = ref<string | null>(null)
+
 // Load schema when component mounts or database changes
 const loadSchema = async () => {
   if (!currentDatabase.value) return
@@ -143,8 +178,6 @@ const saveSchema = async () => {
       x: Math.round(table.x),
       y: Math.round(table.y)
     }))
-
-    console.log(" > Saving schema with tables:", tablesToSave)
     
     await $fetch(`/api/database/${databaseId}`, {
       method: 'POST',
@@ -235,7 +268,6 @@ const createTable = () => {
       isRequired: true 
     }]
   }
-  console.log("New table column id:", newTable?.columns?.[0] )
   
   tables.value.push(newTable) // autosave triggered by watch
   
@@ -253,7 +285,7 @@ onMounted(() => {
         !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
       
       event.preventDefault()
-      deleteTable(selectedTable.value)
+      getDeleteImpact(selectedTable.value)
     }
   }
   window.addEventListener('keydown', handleKeyDown)
@@ -283,10 +315,31 @@ useHead({
   title: `${currentDatabase.value?.name || 'Database'} - DataPantry`
 })
 
+const getDeleteImpact = async (tableId: string) => {
+  try {
+    const sessionId = localStorage.getItem('sessionId')
+    loadingDeleteImpact.value = true
+    openDeleteImpactModal.value = true
+    selectedDeleteTableId.value = tableId
+    
+    const response = await $fetch(`/api/table/${tableId}/impact?sessionId=${sessionId}`, {
+      method: 'GET',
+    })
+
+    loadingDeleteImpact.value = false
+    deleteImpact.value = response
+    
+  } catch (error) {
+    console.error('Save failed:', error)
+  }
+}
+
 // Delete a table
-const deleteTable = (tableId: string) => {
+const deleteTable = async () => {
+  openDeleteImpactModal.value = false
+  const tableId = selectedDeleteTableId.value
   const index = tables.value.findIndex(table => table.id === tableId)
-  if (index !== -1) {
+  if (index !== -1 && tableId) {
     tables.value.splice(index, 1)
     selectedTable.value = null
     

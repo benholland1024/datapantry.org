@@ -1,7 +1,7 @@
 <template>
   <div class="p-6 w-full">
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-6 w-full">
+    <div class="flex items-center justify-between gap-4 mb-6 w-full">
       <UButton 
         icon="i-lucide-arrow-left" 
         variant="ghost" 
@@ -25,7 +25,7 @@
         
         <div class="flex gap-2">
           <!-- Add Row (when not editing) -->
-          <UButton v-if="!isEditing" @click="startAddRow" color="primary">
+          <UButton v-if="!isEditing" @click="addRowDraft" color="primary">
             <UIcon name="i-lucide-plus" class="w-4 h-4 mr-1" />
             Add Row
           </UButton>
@@ -57,7 +57,7 @@
 
       <!-- Data Table -->
       <UTable 
-        :data="tableRows"
+        :data="tableRowData"
         :columns="tableColumns"
         v-model:row-selection="selectedRows"
         :ui="{ 
@@ -81,10 +81,10 @@
           #[`${column.key}-cell`]="{ row }"
         >
           <!-- Editable cell -->
-          <div v-if="isRowEditing(row.original.id)" class="py-1">
+          <div v-if="isRowEditing(row.original._id)" class="py-1">
             <UInput 
               v-if="column.datatype === 'String'"
-              v-model="editingData[column.key]"
+              v-model="rowEditDraft.data[column.key]"
               :placeholder="column.label"
               size="sm"
               @keyup.enter="saveRow"
@@ -92,7 +92,7 @@
             />
             <UInput 
               v-else-if="column.datatype === 'Number'"
-              v-model="editingData[column.key]"
+              v-model="rowEditDraft.data[column.key]"
               type="number"
               :placeholder="column.label"
               size="sm"
@@ -101,7 +101,7 @@
             />
             <UInput 
               v-else
-              v-model="editingData.original[column.key]"
+              v-model="rowEditDraft.data[column.key]"
               :placeholder="column.label"
               size="sm"
               @keyup.enter="saveRow"
@@ -122,7 +122,7 @@
             size="sm" 
             color="error" 
             variant="ghost"
-            @click="deleteRow(row.original.id)"
+            @click="deleteRow(row.original._id)"
           />
         </template>
       </UTable>
@@ -153,9 +153,13 @@ const selectedRows = ref<any>({  })   //  The selected rows in the table (marked
 
 // Editing state
 const isEditing = ref(false)
-const editingRowId = ref<string | null>(null)
-const editingData = ref<Record<string, any>>({})
-const isAddingNew = ref(false)
+
+//  The cancellable draft of the row being edited (or added)
+const rowEditDraft = ref<{ id: string, data: Record<string, any>, isAddingNew: boolean }>({
+  id: '',
+  data: {},
+  isAddingNew: false
+})
 
 //                      //
 //  Computed variables  //
@@ -190,30 +194,30 @@ const tableColumns = computed(() => {
   ]
 })
 
+const tableRowData = computed(() => {
+  let tableRowData = tableRows.value.map(row => ({
+    _id: row.id,
+    ...row.data
+  }))
+  console.log(tableRowData)
+  return tableRowData
+})
+
 //           //
 //  Methods  //
 //           //
 
 // Load table data
 const loadTableData = async () => {
-  console.log('Loading table data for tableId:', tableId)
   loading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
     const response = await $fetch(`/api/table/${tableId}?sessionId=${sessionId}`)
     
-    console.log('Raw API response:', response)
-    console.log('Response rows:', response.rows)
-    
     currentTable.value = response.table
     tableRows.value = response.rows || []
+    console.log('Loaded table data:', tableRows.value)
     
-    console.log('Loaded tableRows:', tableRows.value)
-    // Check the first row's ID specifically
-    if (tableRows.value.length > 0) {
-      console.log('First row ID:', tableRows.value[0].id)
-      console.log('First row structure:', tableRows.value[0])
-    }
   } catch (error) {
     console.error('Failed to load table data:', error)
   } finally {
@@ -223,61 +227,53 @@ const loadTableData = async () => {
 
 // Editing functions
 const isRowEditing = (rowId: string) => {
-  return isEditing.value && editingRowId.value === rowId
+  return rowEditDraft.value.id === rowId
 }
 
 const startEditRow = (row: any) => {
-  console.log("Starting to edit row:", row)
   if (isEditing.value) return           //  Prevent editing multiple rows
   
   isEditing.value = true
-  editingRowId.value = row.original.id  // Use row.original.id
-  isAddingNew.value = false
+  rowEditDraft.value.id = row.original.id  // Use row.original.id
+  rowEditDraft.value.isAddingNew = false
   
   // Copy row.original data to editing state
-  editingData.value = { ...row.original }  // Use row.original
+  rowEditDraft.value = { ...row.original }  // Use row.original
 }
 
-const startAddRow = () => {
-  console.log('Table columns: ', tableColumns.value)
-  if (isEditing.value) return
+const addRowDraft = () => {
+  if (isEditing.value) return  //  No new rows while you're already editing
   
-  isEditing.value = true
-  isAddingNew.value = true
-  editingRowId.value = 'new'
+  isEditing.value = true       //  Enter editing mode
+  rowEditDraft.value.isAddingNew = true     //  Indicate adding new row
   
   // Initialize with proper default values based on column types
-  editingData.value = { id: 'new' }
+  rowEditDraft.value = { id: uuidv4(), isAddingNew: true, data: {} }
   dataColumns.value.forEach((col: any) => {
     if (col.key === 'id') return // Skip id field
     if (col.datatype === 'Number') {
-      editingData.value[col.key] = 0 // Default number to 0, not empty string
+      rowEditDraft.value.data[col.key] = 0 // Default number to 0, not empty string
     } else {
-      editingData.value[col.key] = '' // Strings can be empty
+      rowEditDraft.value.data[col.key] = '' // Strings can be empty
     }
   })
-  
-  console.log('Starting new row with data:', editingData.value)
-  
+    
   // Add temporary row to display
   tableRows.value.push({
-    id: 'new',
-    ...editingData.value
+    id: rowEditDraft.value.id,
+    ...rowEditDraft.value.data
   })
+  console.log(tableRows.value)
 }
 
 const saveRow = async () => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     
-    if (isAddingNew.value) {
-      // Create new row - remove any trailing slash
-      const rowData = { ...editingData.value }
-      delete rowData.id // Remove the temporary 'new' id
-      
-      console.log('Making POST to:', `/api/table/${tableId}/rows`)
-      console.log('With data:', rowData)
-      
+    if (rowEditDraft.value.isAddingNew) {
+      // Create new row
+      const rowData = { ...rowEditDraft.value }
+
       const response = await $fetch(`/api/table/${tableId}/rows`, {  // No trailing slash
         method: 'POST',
         body: {
@@ -286,8 +282,6 @@ const saveRow = async () => {
         }
       })
       
-      console.log('New row response:', response)
-      
       // Replace temporary row with saved row
       const tempIndex = tableRows.value.findIndex(r => r.id === 'new')
       if (tempIndex !== -1) {
@@ -295,26 +289,20 @@ const saveRow = async () => {
       }
     } else {
       // Update existing row
-      const rowData = { ...editingData.value }
-      delete rowData.id
-      
-      console.log('Making PUT to:', `/api/table/${tableId}/rows/${editingRowId.value}`)
-      console.log('With data:', rowData)
-      
-      const response = await $fetch(`/api/table/${tableId}/rows/${editingRowId.value}`, {
+      const rowData = { ...rowEditDraft.value }
+
+      const response = await $fetch(`/api/table/${tableId}/rows/${rowEditDraft.value.id}`, {
         method: 'PUT',
         body: {
           data: rowData,
           sessionId
         }
       })
-      
-      console.log('Update response:', response)
-      
+            
       // Update local row data
-      const rowIndex = tableRows.value.findIndex(r => r.id === editingRowId.value)
+      const rowIndex = tableRows.value.findIndex(r => r.id === rowEditDraft.value.id)
       if (rowIndex !== -1) {
-        Object.assign(tableRows.value[rowIndex], editingData.value)
+        Object.assign(tableRows.value[rowIndex], rowEditDraft.value)
       }
     }
     
@@ -325,7 +313,7 @@ const saveRow = async () => {
 }
 
 const cancelEdit = () => {
-  if (isAddingNew.value) {
+  if (rowEditDraft.value.isAddingNew) {
     // Remove temporary row
     const tempIndex = tableRows.value.findIndex(r => r.id === 'new')
     if (tempIndex !== -1) {
@@ -334,9 +322,9 @@ const cancelEdit = () => {
   }
   
   isEditing.value = false
-  editingRowId.value = null
-  isAddingNew.value = false
-  editingData.value = {}
+  rowEditDraft.value.id = ''
+  rowEditDraft.value.isAddingNew = false
+  rowEditDraft.value = { id: '', data: {}, isAddingNew: false }
 }
 
 const deleteRow = async (rowId: string) => {
@@ -367,7 +355,7 @@ const hasValidationErrors = computed(() => {
   // Check required fields
   return false
   return dataColumns.value.some((col:any) => 
-    col.isRequired && !editingData.value[col.key]
+    col.isRequired && !rowEditDraft.value.data[col.key]
   )
 })
 

@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
       
       return {
         id: row.id,      // Use the real UUID from the database
-        ...cleanData     // Spread everything except the id from data
+        data: cleanData  // The rest of the row data
       }
     })
 

@@ -4,7 +4,7 @@
     <div class="flex justify-around items-center min-h-[calc(100vh-4rem)]">
       <div class="max-w-[50%]">
         <p style="color:var(--blue); font-style: italic;">Turn schemas into real databases</p>
-        <h2 class="text-8xl bold">Manage your databases. <br/>100% free.</h2>
+        <h2 class="text-8xl bold">Manage your databases. <br/>Soup.</h2>
         <p style="font-size: 1.5em;">
           DataPantry is still in beta. <br/>Send feedback to <a href="mailto:benholland1024@gmail.com">benholland1024@gmail.com</a>.
         </p>
