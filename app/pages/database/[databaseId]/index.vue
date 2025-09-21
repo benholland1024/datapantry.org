@@ -3,6 +3,8 @@
 <!--------------------->
 <template>
   <div class="h-[calc(100vh-4rem)] w-full">
+
+    <!--  "Impact modal" popup - be warned of data loss when deleting tables  -->
     <UModal 
       :open="openDeleteImpactModal" 
       :title="deleteImpact.rowCount ? 'Delete table? Rows will be lost!' : 'Delete table?'"
@@ -32,11 +34,14 @@
       </template>
     </UModal>
 
+    <!--  Before databases have loaded...  -->
     <div v-if="loading" class="text-center py-8">
       <div>Loading database...</div>
     </div>
 
+    <!--  The main content area: toolbar, schema, and table detail panel.  -->
     <div v-else-if="currentDatabase" class="h-full flex flex-col relative">
+
       <!-- Toolbar -->
       <div class="bg-theme-bg-darker-2 p-4 border-b border-theme-bg-darker-1
         flex-shrink-0"
@@ -255,9 +260,14 @@ const handleTableUpdate = (tableId: string, updates: any) => {
 const createTable = () => {
   const tableCount = tables.value.length
   const gridSize = 300
+  let newName = 'New Table'
+  let newNameIndex = 1
+  while (tables.value.some(t => t.name === newName)) {
+    newName = `New Table ${newNameIndex++}`
+  }
   const newTable = {
     id: uuidv4(),
-    name: 'New Table',
+    name: newName,
     x: 100 + (tableCount % 3) * gridSize,
     y: 100 + Math.floor(tableCount / 3) * 200,
     columns: [{ 

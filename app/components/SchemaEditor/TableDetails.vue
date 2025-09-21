@@ -14,9 +14,10 @@
 
     <!-- Table Name -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-white mb-2">Table Name</label>
+      <label class="block text-sm font-medium text-white mb-2 transition-colors">Table Name</label>
       <UInput 
-        :value="selectedTableData.name" 
+        :value="selectedTableName" 
+        :color="validationError && validationError.tableName ? 'error' : 'neutral'"
         placeholder="Table name"
         @input="updateTableName($event.target.value)"
       />
@@ -104,6 +105,8 @@
       >
         Delete Table
       </UButton>
+
+      <!--  Start of impact modal - be warned of data loss when editing columns -->
       <UModal
         title="Confirm changes"
         description="Save changes to the table schema"
@@ -115,9 +118,10 @@
         }"
       >
         <UButton 
-          v-if="columnChanges.length"
+          v-if="columnChanges.length || (selectedTableName !== selectedTableData.name)"
           color="success" 
           variant="outline" 
+          :disabled="validationError?.err"
           size="sm"
           @click="getChangeImpact"
         >
@@ -210,6 +214,14 @@
         Close
       </UButton>
     </div>
+
+    <!--  Errors  -->
+    <div v-if="validationError && validationError.tableName" class="mt-4 text-red-400 text-sm">
+      {{ validationError.tableName }}
+    </div>
+    <div v-if="validationError && validationError.columnName" class="mt-4 text-red-400 text-sm">
+      {{ validationError.columnName }}
+    </div>
   </div>
 </template>
 
@@ -233,11 +245,46 @@ const columnsSnapshot = ref([])
 const loadingImpact = ref<boolean>(false)
 const impact = ref<any>({})
 const openImpactModal = ref<boolean>(false)
+const selectedTableName = ref<string>( '')    //  Only needed for table name validation
 
 
 //                       //
 //  Computed properties  //
 //                       //
+const validationError = computed(() => {
+  const errors: { tableName?: string; columnName?: string; columnIndexes?: Array<string>, err?: boolean } = {
+    columnIndexes: []
+  }
+
+  // Validate table name
+  if (selectedTableData.value) {
+    if (!selectedTableName.value || selectedTableName.value.trim() === '') {
+      errors.tableName = 'Table name cannot be empty.'
+      errors.err = true
+    } else if (props.tables.some(t => t.name.trim() === selectedTableName.value.trim() 
+               && t.id !== props.selectedTable)) {
+      errors.tableName = 'Table name must be unique.'
+      errors.err = true
+    }
+    
+    // Validate column names
+    const columnNames = selectedTableData.value.columns.map((col: any) => col.name.trim())
+    const uniqueColumnNames = new Set(columnNames)
+    
+    if (columnNames.includes('')) {
+      errors.columnName = 'Column names cannot be empty.'
+      errors.columnIndexes?.push(columnNames.indexOf(''))
+      errors.err = true
+
+    } else if (uniqueColumnNames.size !== columnNames.length) {
+      errors.columnName = 'Column names must be unique.'
+      errors.err = true
+    }
+  }
+  
+  return errors
+})
+
 
 // Datatype options: [String, Number, + FK - other tables...]
 const datatypeOptions = computed(() => {
@@ -263,6 +310,13 @@ const selectedTableData = computed(() => {
   if (!props.selectedTable) return null
   return props.tables.find(table => table.id === props.selectedTable) || null
 })
+watch(selectedTableData, (newVal) => {
+  if (newVal) {
+    selectedTableName.value = newVal.name
+  } else {
+    selectedTableName.value = ''
+  }
+}, { immediate: true })
 
 const columnChanges = computed(() => {
   if (!selectedTableData.value) return []
@@ -406,10 +460,11 @@ const getConstraintItems = (columnIndex: number) => {
 
 // Update functions - emit changes to parent
 const updateTableName = (value: string) => {
-  if (selectedTableData.value) {
-    selectedTableData.value.name = value
-    emit('updateTable', props.selectedTable!, { name: value })
-  }
+  selectedTableName.value = value
+  // if (selectedTableData.value && !validationError.value?.tableName) {
+  //   selectedTableData.value.name = value
+  //   emit('updateTable', props.selectedTable!, { name: value })
+  // }
 }
 
 const updateColumnName = (index: number, value: string) => {
@@ -549,6 +604,7 @@ const confirmChanges = () => {
     $fetch(`/api/table/${selectedTableData.value.id}?sessionId=${sessionId}`, {
       method: 'PUT',
       body: { 
+        tableName: selectedTableName.value,
         columnChanges: columnChanges.value,
         columns: selectedTableData.value.columns,
         preserveData: true // TODO: make this an option in the UI

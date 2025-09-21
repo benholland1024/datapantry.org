@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid'
 export default defineEventHandler(async (event) => {
   try {
     const tableId = getRouterParam(event, 'tableId') as string
-    const { columns, columnChanges, preserveData } = await readBody(event)
+    const { tableName, columns, columnChanges, preserveData } = await readBody(event)
 
     console.log('Received schema update:', { tableId, columns, preserveData })
 
@@ -44,6 +44,14 @@ export default defineEventHandler(async (event) => {
         statusCode: 401,
         statusMessage: 'Invalid session'
       })
+    }
+
+    //  Update table name if provided
+    if (tableName && tableName.trim() !== '') {
+      await db
+        .update(userTables)
+        .set({ name: tableName.trim() })
+        .where(eq(userTables.id, tableId))
     }
 
     //  Get existing column IDs
