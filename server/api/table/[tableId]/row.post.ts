@@ -6,12 +6,14 @@ import { userTables, rows, sessions, users } from '../../../postgresDB/schema'
 export default defineEventHandler(async (event) => {
   try {
     const tableId = getRouterParam(event, 'tableId') as string
-    const { data, sessionId } = await readBody(event)
+    const { row, sessionId } = await readBody(event)
 
-    if (!sessionId || !tableId || !data) {
+    console.log("Creating row with row:", row)
+
+    if (!sessionId || !tableId || !row) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Session ID, table ID, and data required'
+        statusMessage: 'Session ID, table ID, and row required'
       })
     }
 
@@ -44,17 +46,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Remove any 'id' field from the data before storing
-    const { id: dataId, ...cleanData } = data || {}
-
     // Create new row
-    const rowId = uuidv4()
     const [newRow] = await db
       .insert(rows)
       .values({
-        id: rowId,
+        id: row.id,
         tableId: tableId,
-        data: cleanData  // Store clean data without id
+        data: row.data
       })
       .returning()
 
@@ -62,7 +60,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       row: {
         id: newRow.id,
-        ...newRow.data
+        data: newRow.data
       }
     }
     

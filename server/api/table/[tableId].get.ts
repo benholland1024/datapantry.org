@@ -76,14 +76,10 @@ export default defineEventHandler(async (event) => {
       }))
     }
 
-    const formattedRows = tableRows.map(row => {
-      
-      // Extract the data but exclude any 'id' field from the JSON data
-      const { id: dataId, ...cleanData } = row.data || {}
-      
+    const formattedRows = tableRows.map(row => {      
       return {
         id: row.id,      // Use the real UUID from the database
-        data: cleanData  // The rest of the row data
+        data: row.data || {}  // The rest of the row data
       }
     })
 

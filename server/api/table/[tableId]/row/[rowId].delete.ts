@@ -1,3 +1,14 @@
+/**
+ * Delete a row from a table.
+ * 
+ * DELETE /api/table/:tableId/row/:rowId
+ * 
+ * Parameters:
+ * - sessionId: string (required)
+ * - tableId: string (from URL, required)
+ * - rowId: string (from URL, required)
+ */
+
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../../../postgresDB'
 import { rows, sessions, users } from '../../../../postgresDB/schema'

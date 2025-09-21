@@ -6,12 +6,12 @@ export default defineEventHandler(async (event) => {
   try {
     const tableId = getRouterParam(event, 'tableId') as string
     const rowId = getRouterParam(event, 'rowId') as string
-    const { data, sessionId } = await readBody(event)
+    const { row, sessionId } = await readBody(event)
 
-    if (!sessionId || !tableId || !rowId || !data) {
+    if (!sessionId || !tableId || !rowId || !row) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Session ID, table ID, row ID, and data required'
+        statusMessage: 'Session ID, table ID, row ID, and row required'
       })
     }
 
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     const updateResult = await db
       .update(rows)
       .set({ 
-        data: data,
+        data: row.data,
         updatedAt: new Date()
       })
       .where(and(

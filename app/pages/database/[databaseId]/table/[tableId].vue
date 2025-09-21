@@ -62,7 +62,7 @@
         v-model:row-selection="selectedRows"
         :ui="{ 
           tbody: 'divide-y divide-gray-700',
-          tr: 'hover:bg-gray-800/50'
+          tr: 'hover:bg-gray-700/30'
         }"
       >
         <!-- Dynamic column header rendering -->
@@ -138,6 +138,8 @@
 import { useDatabase } from '@/composables/useDatabase'
 import { v4 as uuidv4 } from 'uuid'
 
+const UCheckbox = resolveComponent('UCheckbox')
+const UBadge = resolveComponent('UBadge')
 
 const route = useRoute()
 
@@ -155,7 +157,7 @@ const selectedRows = ref<any>({  })   //  The selected rows in the table (marked
 const isEditing = ref(false)
 
 //  The cancellable draft of the row being edited (or added)
-const rowEditDraft = ref<{ id: string, data: Record<string, any>, isAddingNew: boolean }>({
+const rowEditDraft = ref<{ id: string, data: Record<string, any>, isAddingNew: boolean | undefined }>({
   id: '',
   data: {},
   isAddingNew: false
@@ -180,11 +182,30 @@ const dataColumns = computed(() => {
 
 const tableColumns = computed(() => {
   return [
+    {
+      id: 'select',
+      header: ({ table }: { table: any }) =>
+        h(UCheckbox, {
+          modelValue: table.getIsSomePageRowsSelected()
+            ? 'indeterminate'
+            : table.getIsAllPageRowsSelected(),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
+            table.toggleAllPageRowsSelected(!!value),
+          'aria-label': 'Select all'
+        }),
+      cell: ({ row }: { row: any }) =>
+        h(UCheckbox, {
+          modelValue: row.getIsSelected(),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+          'aria-label': 'Select row'
+        })
+    },
     ...dataColumns.value.map((col:any) => ({
       constraint: col.constraint,
       accessorKey: col.key,
       header: col.label,
-      sortable: true
+      sortable: true,
+      
     })),
     {
       accessorKey: 'actions',
@@ -199,7 +220,6 @@ const tableRowData = computed(() => {
     _id: row.id,
     ...row.data
   }))
-  console.log(tableRowData)
   return tableRowData
 })
 
@@ -216,7 +236,6 @@ const loadTableData = async () => {
     
     currentTable.value = response.table
     tableRows.value = response.rows || []
-    console.log('Loaded table data:', tableRows.value)
     
   } catch (error) {
     console.error('Failed to load table data:', error)
@@ -231,14 +250,13 @@ const isRowEditing = (rowId: string) => {
 }
 
 const startEditRow = (row: any) => {
-  if (isEditing.value) return           //  Prevent editing multiple rows
+  if (isEditing.value) return                    //  Prevent editing multiple rows
   
   isEditing.value = true
-  rowEditDraft.value.id = row.original.id  // Use row.original.id
+  rowEditDraft.value.id = row.original._id       // Use row.original because it's tanStacks syntax
   rowEditDraft.value.isAddingNew = false
-  
-  // Copy row.original data to editing state
-  rowEditDraft.value = { ...row.original }  // Use row.original
+  rowEditDraft.value.data = { ...row.original }  //  Use ... to copy instead of reference.
+  delete rowEditDraft.value.data._id             //  Remove _id from editable data
 }
 
 const addRowDraft = () => {
@@ -261,9 +279,9 @@ const addRowDraft = () => {
   // Add temporary row to display
   tableRows.value.push({
     id: rowEditDraft.value.id,
-    ...rowEditDraft.value.data
+    data: rowEditDraft.value.data,
+    isNewRow: true,
   })
-  console.log(tableRows.value)
 }
 
 const saveRow = async () => {
@@ -271,13 +289,14 @@ const saveRow = async () => {
     const sessionId = localStorage.getItem('sessionId')
     
     if (rowEditDraft.value.isAddingNew) {
+      delete rowEditDraft.value.isAddingNew  // Clean up flag
       // Create new row
       const rowData = { ...rowEditDraft.value }
 
-      const response = await $fetch(`/api/table/${tableId}/rows`, {  // No trailing slash
+      const response = await $fetch(`/api/table/${tableId}/row`, {  // No trailing slash
         method: 'POST',
         body: {
-          data: rowData,
+          row: rowData,
           sessionId
         }
       })
@@ -291,10 +310,10 @@ const saveRow = async () => {
       // Update existing row
       const rowData = { ...rowEditDraft.value }
 
-      const response = await $fetch(`/api/table/${tableId}/rows/${rowEditDraft.value.id}`, {
+      const response = await $fetch(`/api/table/${tableId}/row/${rowEditDraft.value.id}`, {
         method: 'PUT',
         body: {
-          data: rowData,
+          row: rowData,
           sessionId
         }
       })
@@ -315,7 +334,7 @@ const saveRow = async () => {
 const cancelEdit = () => {
   if (rowEditDraft.value.isAddingNew) {
     // Remove temporary row
-    const tempIndex = tableRows.value.findIndex(r => r.id === 'new')
+    const tempIndex = tableRows.value.findIndex(r => r.isNewRow === true)
     if (tempIndex !== -1) {
       tableRows.value.splice(tempIndex, 1)
     }
@@ -330,7 +349,7 @@ const cancelEdit = () => {
 const deleteRow = async (rowId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
-    await $fetch(`/api/table/${tableId}/rows/${rowId}`, {
+    await $fetch(`/api/table/${tableId}/row/${rowId}`, {
       method: 'DELETE',
       body: { sessionId }
     })
@@ -346,8 +365,30 @@ const deleteRow = async (rowId: string) => {
 }
 
 const deleteSelected = async () => {
+  console.log("Deleting selected rows:", selectedRows.value )
   // TODO: Implement bulk delete
-  console.log('Delete selected:', selectedRows.value)
+  try {
+    const sessionId = localStorage.getItem('sessionId')
+    const rowIndexes = Object.keys(selectedRows.value)
+    let rowIds = [];
+    for (const index of rowIndexes) {
+      rowIds.push(tableRows.value[parseInt(index)].id)
+    }
+    console.log("Row IDs to delete:", rowIds  )
+    
+    if (rowIds.length === 0) return
+    
+    await $fetch(`/api/table/${tableId}/rows`, {
+      method: 'DELETE',
+      body: { sessionId, rowIds }
+    })
+    
+    // Remove from local state
+    tableRows.value = tableRows.value.filter(r => !rowIds.includes(r.id))
+    selectedRows.value = {}
+  } catch (error) {
+    console.error('Failed to delete selected rows:', error)
+  }
 }
 
 // Validation
