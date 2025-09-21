@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 w-full">
+  <div class="p-6 w-full" id="row-editor-page">
     <!-- Header -->
     <div class="flex items-center justify-between gap-4 mb-6 w-full">
       <UButton 
@@ -9,7 +9,10 @@
       >
         Back to Database
       </UButton>
-      <h1 class="text-3xl font-bold">{{ currentTable?.name || 'Loading...' }}</h1>
+      <h1 class="text-3xl font-bold" v-if="currentTable && currentTable.name">
+        {{ currentTable?.name }}
+      </h1>
+      <USkeleton v-else class="h-8 w-1/3" />
     </div>
 
     <div v-if="loading" class="text-center py-8">
@@ -116,7 +119,7 @@
         </template>
         
         <!-- Actions column -->
-        <template #actions-cell="{ row }">
+        <template #actions-cell="{ row }"">
           <UButton 
             icon="i-lucide-trash-2" 
             size="sm" 
@@ -209,8 +212,9 @@ const tableColumns = computed(() => {
     })),
     {
       accessorKey: 'actions',
-      header: 'Actions',
-      sortable: false
+      header: '',
+      sortable: false,
+      class: 'w-[50px] min-w-[50px] max-w-[50px] text-center',
     }
   ]
 })
@@ -418,3 +422,16 @@ useHead({
   title: `${currentTable.value?.name || 'Table'} - DataPantry`
 })
 </script>
+
+<style>
+/* Target the last column (actions) in both header and body */
+#row-editor-page thead th:last-child,
+#row-editor-page tbody td:last-child {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+</style>

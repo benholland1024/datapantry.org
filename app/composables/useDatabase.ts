@@ -35,6 +35,7 @@ const currentUser = ref<UserStructure | null>(null)
 const userDatabases = ref<DatabaseStructure[]>([])
 const currentDatabase = ref<DatabaseStructure | null>(null)
 const loading = ref(true)   //  True until we know if user is logged in
+const databasesLoaded = ref(false) // True when databases have been loaded
 const error = ref<string | null>(null)
 
 export function useDatabase() {
@@ -69,6 +70,7 @@ export function useDatabase() {
       error.value = 'Failed to fetch databases'
     } finally {
       loading.value = false
+      databasesLoaded.value = true
     }
   }
 
@@ -144,6 +146,7 @@ export function useDatabase() {
     userDatabases,
     currentDatabase,
     loading,
+    databasesLoaded,
     error,
 
     //  Methods:

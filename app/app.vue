@@ -42,7 +42,7 @@
       <!-- Main content area -->
       <div class="flex">
         <UNavigationMenu orientation="vertical" :items="sidebarMenu" 
-        v-if="!['/', '/sign-up', '/sign-in'].includes(route.path)"
+          v-if="!['/', '/sign-up', '/sign-in'].includes(route.path) && databasesLoaded"
           class="data-[orientation=vertical]:w-48 bg-theme-bg-darker-2
             h-full min-h-[calc(100vh-4rem)]" 
         />
@@ -61,6 +61,7 @@ const {
   currentUser, 
   setCurrentUser, 
   loading, 
+  databasesLoaded,
   signOut, 
   userDatabases
 } = useDatabase()
@@ -115,36 +116,49 @@ const userMenu = ref<DropdownMenuItem[]>([
   }
 ])
 
+const isOpen = ref(true)
+setTimeout(() => {
+  console.log("Opening sidebar menu after delay")
+  isOpen.value = true
+}, 5000);
+
+
 // Make sidebarMenu computed
-const sidebarMenu = computed<NavigationMenuItem[][]>(() => [
-  [
-    {
-      label: 'Databases',
-      type: 'label'
-    },
-    // Dynamically insert user databases
-    ...userDatabases.value.map(database => ({
-      label: database.name,
-      icon: 'i-lucide-database',
-      to: `/database/${database.id}`,
-      defaultOpen: false,
-      children: database.tables.map(table => ({
-        label: table.name,
-        icon: 'i-lucide-table',
-        to: `/database/${database.id}/table/${table.id}`
-      }))
-    })),
-  ],
-  [
-    {
-      label: 'How to Use',
-      icon: 'i-lucide-circle-help',
-    },
-    {
-      label: 'Examples',
-      icon: 'i-lucide-circle-help',
-      disabled: true
-    }
+const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
+  console.log("Recomputing sidebarMenu, isOpen:", isOpen.value)
+  return [
+    [
+      {
+        label: 'Databases',
+        type: 'label'
+      },
+      // Dynamically insert user databases
+      ...userDatabases.value.map(database => ({
+        label: database.name,
+        icon: 'i-lucide-database',
+        to: `/database/${database.id}`,
+        defaultOpen: true,
+        open: true,
+        children: database.tables.map(table => ({
+          label: table.name,
+          icon: 'i-lucide-table',
+          to: `/database/${database.id}/table/${table.id}`
+        }))
+      })),
+    ],
+    [
+      {
+        label: 'How to Use',
+        icon: 'i-lucide-circle-help',
+        open: isOpen.value,
+        defaultOpen: true,
+      },
+      {
+        label: 'Examples',
+        icon: 'i-lucide-circle-help',
+        disabled: true
+      }
+    ]
   ]
-])
+})
 </script>
