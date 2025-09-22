@@ -35,7 +35,7 @@
           
           <!-- Save/Cancel (when editing) -->
           <template v-if="isEditing">
-            <UButton @click="saveRow" :disabled="hasValidationErrors" color="primary">
+            <UButton @click="saveRow" :disabled="hasValidationErrors" color="success" variant="solid">
               <UIcon name="i-lucide-check" class="w-4 h-4 mr-1" />
               Save Changes
             </UButton>
@@ -84,7 +84,7 @@
           #[`${column.key}-cell`]="{ row }"
         >
           <!-- Editable cell -->
-          <div v-if="isRowEditing(row.original._id)" class="py-1">
+          <div v-if="isRowEditing(row.original._id)" class="px-4 py-5">
             <UInput 
               v-if="column.datatype === 'String'"
               v-model="rowEditDraft.data[column.key]"
@@ -113,7 +113,7 @@
           </div>
           
           <!-- Display cell -->
-          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer py-2 px-1 hover:bg-gray-700/30 rounded">
+          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 hover:bg-gray-700/30 rounded">
             {{ formatCellValue(row, column.key, column.datatype) }}
           </div>
         </template>
@@ -433,5 +433,9 @@ useHead({
   text-align: center;
   padding-left: 0;
   padding-right: 0;
+}
+#row-editor-page tr td:not(:last-child):not(:first-child) {
+  vertical-align: top; /* Align cell content to the top */
+  padding: 0px !important;
 }
 </style>

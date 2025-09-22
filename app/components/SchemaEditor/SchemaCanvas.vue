@@ -313,6 +313,7 @@ const startPan = (event: MouseEvent) => {
   isPanning.value = true
   lastPanX.value = event.clientX
   lastPanY.value = event.clientY
+  
   emit('deselectTable') // Deselect any selected table when starting to pan
 }
 

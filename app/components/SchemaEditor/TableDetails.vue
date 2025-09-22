@@ -119,7 +119,7 @@
         }"
       >
         <UButton 
-          v-if="columnChanges.length || (selectedTableName !== selectedTableData.name)"
+          v-if="hasUnsavedChanges"
           :color="validationError.err ? 'neutral' : 'success'" 
           variant="outline" 
           :disabled="validationError?.err"
@@ -257,18 +257,20 @@ const emit = defineEmits<{
   close: []
   updateTable: [tableId: string, updates: any]
   deleteTable: [tableId: string] 
+  unsavedChanges: [hasUnsaved: boolean]
 }>()
 
 const columnsSnapshot = ref([])
 const loadingImpact = ref<boolean>(false)
 const impact = ref<any>({})
 const openImpactModal = ref<boolean>(false)
-const selectedTableName = ref<string>( '')    //  Only needed for table name validation
+const selectedTableName = ref<string>('')    //  Only needed for table name validation
 
 
 //                       //
 //  Computed properties  //
 //                       //
+
 const validationError = computed(() => {
   const errors: { 
     tableName?: string,
@@ -346,6 +348,17 @@ watch(selectedTableData, (newVal) => {
   } else {
     selectedTableName.value = ''
   }
+}, { immediate: true })
+
+const hasUnsavedChanges = computed(() => {
+  let hasUnsavedChanges = false
+  if (selectedTableData && selectedTableData.value) {
+    hasUnsavedChanges = columnChanges.value.length > 0 || (selectedTableName.value !== selectedTableData.value.name)
+  }
+  return hasUnsavedChanges
+})
+watch(hasUnsavedChanges, (newVal) => {
+  emit('unsavedChanges', newVal)
 }, { immediate: true })
 
 const columnChanges = computed(() => {

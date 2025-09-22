@@ -34,6 +34,33 @@
       </template>
     </UModal>
 
+    <!--  Save changes impact modal  -->
+    <UModal 
+      :open="openSaveChangesModal" 
+      title="Unsaved changes! "
+      :closeable="true"
+      size="lg"
+    >
+      <template #body>
+        <div>
+          <div>
+            You have unsaved changes to this table. Please save or discard your changes before closing the table details.
+          </div>
+          <div class="flex gap-4 mt-4">
+            <UButton @click="openSaveChangesModal = false" color="primary">OK</UButton>
+            <UButton 
+              @click="selectedTable = null; openSaveChangesModal = false" 
+              color="error"
+              variant="ghost"
+            >
+              Discard my changes
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+
     <!--  Before databases have loaded...  -->
     <div v-if="loading" class="text-center py-8">
       <div>Loading database...</div>
@@ -53,12 +80,12 @@
           <div class="flex items-center gap-1 text-sm">
             <UIcon 
               v-if="saveStatus === 'editing'" 
-              name="i-lucide-edit-3" 
+              name="material-symbols:edit-outline" 
               class="w-4 h-4 text-orange-400" 
             />
             <UIcon 
               v-else-if="saveStatus === 'saving'" 
-              name="i-lucide-loader-2" 
+              name="tabler:loader-2" 
               class="w-4 h-4 animate-spin text-blue-400" 
             />
             <UIcon 
@@ -98,7 +125,7 @@
         :selected-table="selectedTable"
         :zoom-level="zoomLevel"
         @select-table="(tableId) => selectedTable = tableId"
-        @deselect-table="() => selectedTable = null"
+        @deselect-table="deselectTableOnPan()"
         @update-table="handleTableUpdate"
         @create-table="createTable"
         @update-zoom="(zoom) => zoomLevel = zoom"
@@ -107,7 +134,8 @@
       <TableDetails 
         :selected-table="selectedTable"
         :tables="tables"
-        @close="selectedTable = null"
+        @unsaved-changes="hasUnsavedChanges = $event"
+        @close="closeTableDetails"
         @update-table="handleTableUpdate"
         @delete-table="getDeleteImpact"
       />
@@ -144,6 +172,7 @@ const zoomLevel = ref(1)
 // Table data
 const databaseId = parseInt(route.params.databaseId as string)
 const selectedTable = ref<string | null>(null)
+const hasUnsavedChanges = ref(false)
 const tables = ref<any[]>([])
 const isLoading = ref(false)
 const saveStatus = ref<'idle' | 'editing' | 'saving' | 'saved' | 'error'>('idle')
@@ -153,6 +182,9 @@ const openDeleteImpactModal = ref(false)
 const loadingDeleteImpact = ref(false)
 const deleteImpact = ref<any>({})
 const selectedDeleteTableId = ref<string | null>(null)
+
+// Save changes impact modal
+const openSaveChangesModal = ref(false)
 
 // Load schema when component mounts or database changes
 const loadSchema = async () => {
@@ -283,6 +315,20 @@ const createTable = () => {
   
   // Add to sidebar
   addTableToDatabase(databaseId, newTable)
+}
+
+const closeTableDetails = () => {
+  console.log("Attempting to close table details, hasUnsavedChanges:", hasUnsavedChanges.value)
+  if (hasUnsavedChanges.value) {
+    openSaveChangesModal.value = true
+    return
+  }
+  selectedTable.value = null
+}
+const deselectTableOnPan = () => {
+  if (!hasUnsavedChanges.value) {
+    closeTableDetails()
+  }
 }
 
 // Update canvas size on mount

@@ -121,16 +121,8 @@ const userMenu = ref<DropdownMenuItem[]>([
   }
 ])
 
-const isOpen = ref(true)
-setTimeout(() => {
-  console.log("Opening sidebar menu after delay")
-  isOpen.value = true
-}, 5000);
-
-
 // Make sidebarMenu computed
 const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
-  console.log("Recomputing sidebarMenu, isOpen:", isOpen.value)
   return [
     [
       {
@@ -155,7 +147,7 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
       {
         label: 'How to Use',
         icon: 'i-lucide-circle-help',
-        open: isOpen.value,
+        open: true,
         defaultOpen: true,
       },
       {
