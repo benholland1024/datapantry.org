@@ -46,7 +46,8 @@
           class="data-[orientation=vertical]:w-48 bg-theme-bg-darker-2
             h-full min-h-[calc(100vh-4rem)]" 
         />
-        <div v-else class="w-48 bg-theme-bg-darker-2 h-full min-h-[calc(100vh-4rem)] 
+        <div v-else-if="!['/', '/sign-up', '/sign-in'].includes(route.path) " 
+          class="w-48 bg-theme-bg-darker-2 h-full min-h-[calc(100vh-4rem)] 
           flex flex-col items-center gap-2 p-4">
           <USkeleton class="w-full h-4 rounded-lg" v-for="n in 3" :key="n" />
         </div>

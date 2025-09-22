@@ -63,7 +63,7 @@
             />
             <UIcon 
               v-else-if="saveStatus === 'saved'" 
-              name="i-lucide-check" 
+              name="material-symbols:check" 
               class="w-4 h-4 text-green-400" 
             />
             <UIcon 

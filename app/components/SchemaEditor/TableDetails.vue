@@ -67,6 +67,7 @@
             :value="column.name" 
             placeholder="Column name"
             class="flex-1"
+            :color="validationError.columnIndexes?.includes(index.toString()) ? 'error' : 'neutral'"
             @input="updateColumnName(index, $event.target.value)"
           />
           
@@ -119,7 +120,7 @@
       >
         <UButton 
           v-if="columnChanges.length || (selectedTableName !== selectedTableData.name)"
-          color="success" 
+          :color="validationError.err ? 'neutral' : 'success'" 
           variant="outline" 
           :disabled="validationError?.err"
           size="sm"
@@ -128,6 +129,7 @@
           Save changes
         </UButton>
 
+        <!--  List of proposed changes  -->
         <template #content>
           <div class="p-4 space-y-4" v-if="loadingImpact">
             <div class="flex items-center gap-4">
@@ -147,6 +149,19 @@
               Are you sure you want to save these changes to the table?
             </p>
             <div class="max-h-64 overflow-y-auto space-y-2">
+              <div v-if="selectedTableName !== selectedTableData.name" class="p-2 border border-gray-600 rounded text-sm">
+                <p class="font-semibold">
+                  Table name changed:
+                </p>
+                <ul class="text-sm list-disc list-outside ml-5">
+                  <li>
+                    Table name: "{{ selectedTableData.name }}" → "{{ selectedTableName }}"
+                    <div class="text-xs text-gray-400 italic">
+                      Any references to this table in foreign keys will be updated automatically.
+                    </div>
+                  </li>
+                </ul>
+              </div>
               <div v-for="change in columnChanges" :key="change.id" class="p-2 border border-gray-600 rounded text-sm">
                 <div v-if="change.type === 'update'">
                   <p class="font-semibold">
@@ -222,6 +237,9 @@
     <div v-if="validationError && validationError.columnName" class="mt-4 text-red-400 text-sm">
       {{ validationError.columnName }}
     </div>
+    <div v-if="validationError && validationError.constraint" class="mt-4 text-red-400 text-sm">
+      {{ validationError.constraint }}
+    </div>
   </div>
 </template>
 
@@ -252,7 +270,13 @@ const selectedTableName = ref<string>( '')    //  Only needed for table name val
 //  Computed properties  //
 //                       //
 const validationError = computed(() => {
-  const errors: { tableName?: string; columnName?: string; columnIndexes?: Array<string>, err?: boolean } = {
+  const errors: { 
+    tableName?: string,
+    columnName?: string,
+    columnIndexes?: Array<string>,
+    constraint?: string,
+    err?: boolean 
+  } = {
     columnIndexes: []
   }
 
@@ -268,16 +292,22 @@ const validationError = computed(() => {
     }
     
     // Validate column names
-    const columnNames = selectedTableData.value.columns.map((col: any) => col.name.trim())
-    const uniqueColumnNames = new Set(columnNames)
+    for (let i = 0; i < selectedTableData.value.columns.length; i++) {
+      const col = selectedTableData.value.columns[i]
+      if (!col.name || col.name.trim() === '') {
+        errors.columnName = 'Column names cannot be empty.'
+        errors.columnIndexes?.push(i.toString())
+        errors.err = true
+      } else if (selectedTableData.value.columns.some((c:any, idx:number) => c.name.trim() === col.name.trim() && idx !== i)) {
+        errors.columnName = 'Column names must be unique.'
+        errors.columnIndexes?.push(i.toString())
+        errors.err = true
+      }
+    }
     
-    if (columnNames.includes('')) {
-      errors.columnName = 'Column names cannot be empty.'
-      errors.columnIndexes?.push(columnNames.indexOf(''))
-      errors.err = true
-
-    } else if (uniqueColumnNames.size !== columnNames.length) {
-      errors.columnName = 'Column names must be unique.'
+    // Validate constraints
+    if (selectedTableData.value.columns.findIndex((c:any) => c.constraint === 'primary') === -1) {
+      errors.constraint = 'At least one column must be set as the primary key.'
       errors.err = true
     }
   }

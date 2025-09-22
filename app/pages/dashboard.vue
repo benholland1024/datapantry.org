@@ -9,7 +9,10 @@
         :to="`/database/${database.id}`"
         class="w-64 h-32 bg-bg3 rounded-lg cursor-pointer"
       >
-        <h2 class="text-xl font-semibold p-2">{{ database.name }}</h2>
+        <h2 class="text-xl font-semibold p-2 flex items-center">
+          <UIcon name="material-symbols:database-outline" class="inline-block mr-2" />
+          {{ database.name }}
+        </h2>
         <p class="p-2">Tables: {{ database.tables.length }}</p>
       </NuxtLink>
       
