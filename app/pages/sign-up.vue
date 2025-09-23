@@ -40,12 +40,11 @@
       
       <div class="flex gap-2">
         <UButton
-          color="bg2"
-          class="text-white cursor-pointer"
-          varient="text"
+          color="primary"
+          class="cursor-pointer"
           @click="sign_up()"
         >
-          Submit!
+          Sign up!
         </UButton>
       </div>
 

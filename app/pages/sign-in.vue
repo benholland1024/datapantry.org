@@ -3,7 +3,7 @@
     <!-- Centered content  -->
     <div class="flex flex-col gap-4 w-64">
       <h3 class="bold text-lg">Sign In</h3>
-      <UInput v-model="username" placeholder="" :ui="{ base: 'peer' }" >
+      <UInput v-model="username" placeholder="" :ui="{ base: 'peer' }" tabindex="1">
         <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted 
           text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5
           peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
@@ -14,8 +14,10 @@
         </label>
       </UInput>
       
-      <UInput v-model="password" placeholder="" 
-        :ui="{ base: 'peer', trailing: 'pe-1' }" :type="showPass ? 'text' : 'password'">
+      <UInput v-model="password" placeholder="" tabindex="2"
+        :ui="{ base: 'peer', trailing: 'pe-1' }" :type="showPass ? 'text' : 'password'"
+        @keyup.enter="sign_in()"
+      >
         <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted 
           text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5
           peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
@@ -26,6 +28,7 @@
         </label>
         <template #trailing>
           <UButton
+            tabindex="3"
             color="neutral"
             variant="link"
             size="sm"
@@ -40,14 +43,16 @@
       
       <div class="flex gap-2">
         <UButton
-          color="bg2"
-          class="text-white cursor-pointer"
-          varient="text"
+          color="secondary"
+          class="cursor-pointer"
           @click="sign_in()"
+          tabindex="4"
         >
           Sign in!
         </UButton>
-        <UButton color="bg" class="text-white" varient="text">Forgot Password</UButton>
+        <UButton variant="ghost" class="text-white" tabindex="5">
+          Forgot Password
+        </UButton>
 
       </div>
 

@@ -10,10 +10,10 @@
         </p>
         <br/>
         <div class="flex gap-4 mb-8">
-          <UButton color="bg3" class="text-white" onclick="render_register_input()">
+          <UButton color="bg3" class="text-white" onclick="render_register_input()" v-if="!currentUser">
             Register to create a database!
           </UButton>
-          <UButton color="bg3" class="text-white" onclick="boot_side_bar();">
+          <UButton color="bg3" class="text-white" onclick="boot_side_bar();" v-else>
             Go to your dashboard!
           </UButton>
         </div>
@@ -26,7 +26,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue';
+import { ref } from 'vue';
+import { useDatabase } from '@/composables/useDatabase';
+
+const { currentUser } = useDatabase();
+
 
 
 </script>

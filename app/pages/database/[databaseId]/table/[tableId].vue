@@ -113,7 +113,7 @@
           </div>
           
           <!-- Display cell -->
-          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 hover:bg-gray-700/30 rounded">
+          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 rounded">
             {{ formatCellValue(row, column.key, column.datatype) }}
           </div>
         </template>
