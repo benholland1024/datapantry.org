@@ -27,6 +27,10 @@
         </div>
         
         <div class="flex gap-2">
+          <span v-if="isEditing && !editValidation.valid" class="text-sm text-error flex items-center">
+            {{ editValidation.msg }}
+          </span>
+
           <!-- Add Row (when not editing) -->
           <UButton v-if="!isEditing" @click="addRowDraft" color="primary">
             <UIcon name="i-lucide-plus" class="w-4 h-4 mr-1" />
@@ -35,7 +39,9 @@
           
           <!-- Save/Cancel (when editing) -->
           <template v-if="isEditing">
-            <UButton @click="saveRow" :disabled="hasValidationErrors" color="success" variant="solid">
+            <UButton @click="saveRow" color="success" variant="solid"
+              :disabled="!editValidation.valid"
+            >
               <UIcon name="i-lucide-check" class="w-4 h-4 mr-1" />
               Save Changes
             </UButton>
@@ -73,9 +79,12 @@
           :key="_column.key" 
           #[`${_column.key}-header`]="{ column }"
         >
-          <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
-          <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
-          <span>{{ _column.label }}</span>
+          <div class="flex items-center">
+            <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
+            <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
+            <UIcon v-else-if="_column.constraint === 'unique'" name="i-lucide-fingerprint" class="w-4 h-4 text-blue-400 mr-1" />
+            <span>{{ _column.label }}</span>
+          </div>
         </template>
 
         <!-- Dynamic cell rendering -->
@@ -227,6 +236,33 @@ const tableRowData = computed(() => {
   return tableRowData
 })
 
+//  Validation for row editing
+const editValidation = computed(() => {
+  let validation = { valid: true, msg: ''};
+  for (const col of dataColumns.value) {
+    if (col.isRequired && !rowEditDraft.value.data[col.key]) {
+      validation.valid = false
+      validation.msg = `Field ${col.label} is required`
+      break
+    } else if (col.constraint === 'primary' || col.constraint === 'unique') {
+      //  Empty values are allowed for non-required unique fields
+      if (!rowEditDraft.value.data[col.key] && col.constraint === 'unique') {  
+        continue;
+      }
+      const duplicate = tableRows.value.find(r => 
+        r.id !== rowEditDraft.value.id && 
+        r.data[col.key] === rowEditDraft.value.data[col.key]
+      )
+      if (duplicate) {
+        validation.valid = false
+        validation.msg = `Field ${col.label} must be unique`
+        break
+      }
+    }
+  }
+  return validation
+})
+
 //           //
 //  Methods  //
 //           //
@@ -350,6 +386,7 @@ const cancelEdit = () => {
   rowEditDraft.value = { id: '', data: {}, isAddingNew: false }
 }
 
+//  Delete a single row (the trash can button)
 const deleteRow = async (rowId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
@@ -368,6 +405,7 @@ const deleteRow = async (rowId: string) => {
   }
 }
 
+//  Delete the selected rows
 const deleteSelected = async () => {
   console.log("Deleting selected rows:", selectedRows.value )
   // TODO: Implement bulk delete
@@ -394,15 +432,6 @@ const deleteSelected = async () => {
     console.error('Failed to delete selected rows:', error)
   }
 }
-
-// Validation
-const hasValidationErrors = computed(() => {
-  // Check required fields
-  return false
-  return dataColumns.value.some((col:any) => 
-    col.isRequired && !rowEditDraft.value.data[col.key]
-  )
-})
 
 // Utility function
 const formatCellValue = (row: any, key: any, datatype: string) => {
