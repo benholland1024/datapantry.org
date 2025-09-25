@@ -309,7 +309,7 @@ const validationError = computed(() => {
     
     // Validate constraints
     if (selectedTableData.value.columns.findIndex((c:any) => c.constraint === 'primary') === -1) {
-      errors.constraint = 'At least one column must be set as the primary key.'
+      errors.constraint = 'One column must be set as the primary key.'
       errors.err = true
     }
   }
@@ -655,6 +655,7 @@ const confirmChanges = () => {
     }).then(() => {
       impact.value = {}
       columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
+      emit('updateTable', props.selectedTable!, { name: selectedTableName.value })
     })
     
   } catch (error) {

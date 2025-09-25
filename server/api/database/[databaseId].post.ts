@@ -55,7 +55,6 @@ export default defineEventHandler(async (event) => {
       .from(userTables)
       .where(eq(userTables.databaseId, databaseId))
     const existingTableIds = <Array<string>> existingTables.map(t => t.id)
-    console.log(' > Existing table ids:', existingTableIds)
 
     //  Get existing rows that reference these tables
     const existingRows = await db

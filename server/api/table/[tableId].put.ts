@@ -21,8 +21,6 @@ export default defineEventHandler(async (event) => {
     const tableId = getRouterParam(event, 'tableId') as string
     const { tableName, columns, columnChanges, preserveData } = await readBody(event)
 
-    console.log('Received schema update:', { tableId, columns, preserveData })
-
     const sessionId = getQuery(event).sessionId as string
     
     if (!sessionId || !tableId || !columns) {
@@ -59,7 +57,6 @@ export default defineEventHandler(async (event) => {
       .select({ id: userColumns.id })
       .from(userColumns)
       .where(eq(userColumns.tableId, tableId))
-    console.log(' > Existing columns:', existingColumns.length)
     const existingColumnIds = existingColumns.map(c => c.id)
     const incomingColumnIds = columns.filter((c: any) => c.id).map((c: any) => c.id)
 
@@ -83,7 +80,6 @@ export default defineEventHandler(async (event) => {
     //  2. Delete all columns that are not in the incoming set
     const columnsToDelete = existingColumnIds.filter(id => !incomingColumnIds.includes(id))
     if (columnsToDelete.length > 0) {
-      console.log(' > Deleting columns:', columnsToDelete.length)
       await db
         .delete(userColumns)
         .where(inArray(userColumns.id, columnsToDelete))
@@ -91,7 +87,6 @@ export default defineEventHandler(async (event) => {
 
     // 3. Insert or update incoming columns
     for (const column of columns) {
-      console.log(' > Processing column:', column.name, column.id ? `(id: ${column.id})` : '(new)')
       if (column.id && existingColumnIds.includes(column.id)) {
         // Update existing column
         await db
@@ -103,7 +98,6 @@ export default defineEventHandler(async (event) => {
             constraint: column.constraint,
           })
           .where(eq(userColumns.id, column.id))
-        console.log('   - Updated column:', column.name)
       } else {
         // Insert new column
         await db
@@ -117,7 +111,6 @@ export default defineEventHandler(async (event) => {
             constraint: column.constraint,
             orderIndex: 100, // TODO: determine order
           })
-        console.log('   - Inserting new column:', column.name)
       }
     }
 

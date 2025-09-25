@@ -8,8 +8,6 @@ export default defineEventHandler(async (event) => {
     const tableId = getRouterParam(event, 'tableId') as string
     const { row, sessionId } = await readBody(event)
 
-    console.log("Creating row with row:", row)
-
     if (!sessionId || !tableId || !row) {
       throw createError({
         statusCode: 400,

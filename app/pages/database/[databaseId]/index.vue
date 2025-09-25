@@ -318,7 +318,6 @@ const createTable = () => {
 }
 
 const closeTableDetails = () => {
-  console.log("Attempting to close table details, hasUnsavedChanges:", hasUnsavedChanges.value)
   if (hasUnsavedChanges.value) {
     openSaveChangesModal.value = true
     return
