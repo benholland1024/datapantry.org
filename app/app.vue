@@ -9,34 +9,44 @@
           <h1 class="text-2xl font-bold">&#129387; DataPantry</h1>
         </NuxtLink>
         <div class="flex-1"><!-- spacer --></div>
-        <div class="flex gap-2" v-if="!currentUser && !loading">
-          <UButton to="/sign-in" 
-            class="bg-theme-bg-darker-1 text-theme-text px-4 py-2 rounded hover:bg-theme-bg-darker-0 transition"
-          >
-            Sign In
-          </UButton>
-          <UButton to="/sign-up"
-            class="cursor-pointer text-white" color="bg3">
-            Sign Up
-          </UButton>
-        </div>
-        <div v-else-if="currentUser && !loading">
-          <UDropdownMenu
-            :items="userMenu"
-            :ui="{
-              content: 'w-48'
-            }"
-          >
-            <UButton
-              class="cursor-pointer text-white" color="bg3">
-              {{ currentUser.username }}
+
+        <!--  The login buttons / user buttons section. -->
+        <!--  Appears on the client-side only with loading template on server-side,  -->
+        <!--  since the server can't check login status with localStorage. -->
+        <ClientOnly>
+          <div class="flex gap-2" v-if="!currentUser && !loading">
+            <UButton to="/sign-in" 
+              class="bg-theme-bg-darker-1 text-theme-text px-4 py-2 rounded hover:bg-theme-bg-darker-0 transition"
+            >
+              Sign In
             </UButton>
-          </UDropdownMenu>
-        </div>
-        <div class="flex gap-2" v-else>
-          <USkeleton class="h-6 w-24 rounded-full" />
-          <USkeleton class="h-6 w-24 rounded-full" />
-        </div>
+            <UButton to="/sign-up"
+              class="cursor-pointer text-white" color="bg3">
+              Sign Up
+            </UButton>
+          </div>
+          <div v-else-if="currentUser && !loading">
+            <UDropdownMenu
+              :items="userMenu"
+              :ui="{
+                content: 'w-48'
+              }"
+            >
+              <UButton
+                class="cursor-pointer text-white" color="bg3">
+                {{ currentUser.username }}
+              </UButton>
+            </UDropdownMenu>
+          </div>
+          <div class="flex gap-2" v-else>
+            <USkeleton class="h-6 w-24 rounded-full" />
+            <USkeleton class="h-6 w-24 rounded-full" />
+          </div>
+          <template #fallback>
+            <USkeleton class="h-6 w-24 rounded-full" />
+            <USkeleton class="h-6 w-24 rounded-full" />
+          </template>
+        </ClientOnly>
       </div>
 
       <!-- Main content area -->
