@@ -49,7 +49,7 @@
           <div class="flex gap-4 mt-4">
             <UButton @click="openSaveChangesModal = false" color="primary">OK</UButton>
             <UButton 
-              @click="selectedTable = null; openSaveChangesModal = false" 
+              @click="discardChangesAndNavigate()" 
               color="error"
               variant="ghost"
             >
@@ -151,6 +151,10 @@
 <script setup lang="ts">
 import TableDetails from '@/components/SchemaEditor/TableDetails.vue'
 import SchemaCanvas from '~/components/SchemaEditor/SchemaCanvas.vue'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
+
+const router = useRouter()
+const pendingRoute = ref<any>(null)
 
 import { v4 as uuidv4 } from 'uuid'
 
@@ -319,6 +323,7 @@ const createTable = () => {
 
 const closeTableDetails = () => {
   if (hasUnsavedChanges.value) {
+    pendingRoute.value = null // This fires when we just want to close the panel, so clear any pending route. 
     openSaveChangesModal.value = true
     return
   }
@@ -327,6 +332,16 @@ const closeTableDetails = () => {
 const deselectTableOnPan = () => {
   if (!hasUnsavedChanges.value) {
     closeTableDetails()
+  }
+}
+
+const discardChangesAndNavigate = () => {
+  selectedTable.value = null; 
+  openSaveChangesModal.value = false
+  hasUnsavedChanges.value = false
+  if (pendingRoute.value) {
+    router.push(pendingRoute.value)
+    pendingRoute.value = null
   }
 }
 
@@ -353,6 +368,16 @@ onMounted(() => {
     }
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  //  Warn if user tries to close tab with unsaved changes
+  const leaveSiteHandler = (e: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges.value) {
+      e.preventDefault()
+      e.returnValue = ''  //  This triggers the default "You have unsaved changes" dialog
+    }
+  }
+  window.addEventListener('beforeunload', leaveSiteHandler)
+  onUnmounted(() => window.removeEventListener('beforeunload', leaveSiteHandler))
   
   onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown)
@@ -402,4 +427,14 @@ const deleteTable = async () => {
     removeTableFromDatabase(databaseId, tableId)
   }
 }
+
+onBeforeRouteLeave((to, from, next) => {
+  if (hasUnsavedChanges.value) {
+    openSaveChangesModal.value = true
+    pendingRoute.value = to // Save the route user tried to go to
+    next(false) // Cancel navigation for now
+  } else {
+    next()
+  }
+})
 </script>

@@ -111,6 +111,11 @@
               @keyup.enter="saveRow"
               @keyup.escape="cancelEdit"
             />
+            <USelectMenu
+              v-else-if="column.datatype === 'Foreign Key'"
+              :items="['Option 1', 'Option 2', 'Option 3']"
+              v-model="rowEditDraft.data[column.key]"
+            />
             <UInput 
               v-else
               v-model="rowEditDraft.data[column.key]"
@@ -182,7 +187,7 @@ const rowEditDraft = ref<{ id: string, data: Record<string, any>, isAddingNew: b
 // Table columns configuration
 const dataColumns = computed(() => {
   if (!currentTable.value?.columns) return []
-  
+  console.log(currentTable.value.columns)
   return currentTable.value.columns.map((col: any) => ({
     key: col.name,
     label: col.name,
