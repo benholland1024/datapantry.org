@@ -1,11 +1,11 @@
 ## Phase 1: Beta Launch
-- [ ] Sidebar navigation with tables
+- [x] Sidebar navigation with tables
   - [x] Tables appear under databases
   - [x] Tables are reactive to schema changes
-  - [ ] Databases open to show tables automatically when selected
+  - [x] Databases open to show tables automatically when selected
 - [ ] Table data editing 
-  - [ ] Figure out the primary key situation - Do all tables use "id" as the primary key? 
-        Is there a 'secret primary' key like "_id" that's used, so users can change the primary key without losing rows?
+  - [x] Figure out the primary key situation -
+        There a 'secret primary' key like "_id" that's used, so users can change the primary key without losing rows
   - [ ] Row creation, editing, canceling.
   - [ ] Row creation, editing, saving. 
   - [ ] Existing row editing, canceling.

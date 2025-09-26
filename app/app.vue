@@ -114,7 +114,7 @@ onMounted(async () => {
 const userMenu = ref<DropdownMenuItem[]>([
   {
     label: 'Dashboard',
-    icon: 'i-lucide-dashboard',
+    icon: 'si:dashboard-line',
     to: '/dashboard'
   },
   {
