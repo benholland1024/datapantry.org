@@ -113,8 +113,10 @@
             />
             <USelectMenu
               class="w-full"
+              :placeholder="`Select ${column.foreignKey?.columnName} from table '${ column.foreignKey?.tableId ? 
+                FKTables.find(t => t.tableId === column.foreignKey?.tableId)?.tableName : 'Unknown' }'`"
               v-else-if="column.datatype === 'Foreign Key'"
-              :items="['Option 1', 'Option 2', 'Option 3']"
+              :items="foreignKeyOptions[column.foreignKey?.tableId] || ['dang', column.foreignKey]"
               v-model="rowEditDraft.data[column.key]"
             />
             <UInput 
@@ -153,6 +155,7 @@
 </template>
 
 <script setup lang="ts">
+import { table } from '#build/ui'
 import { useDatabase } from '@/composables/useDatabase'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -189,10 +192,10 @@ const rowEditDraft = ref<{ id: string, data: Record<string, any>, isAddingNew: b
 // Table columns configuration
 const dataColumns = computed(() => {
   if (!currentTable.value?.columns) return []
-  console.log(currentTable.value.columns)
   return currentTable.value.columns.map((col: any) => ({
     key: col.name,
     label: col.name,
+    foreignKey: col.foreignKey,
     datatype: col.datatype,
     constraint: col.constraint,
     isRequired: col.isRequired
@@ -243,6 +246,16 @@ const tableRowData = computed(() => {
   return tableRowData
 })
 
+//  Foreign key rows for dropdowns
+const foreignKeyOptions = computed(() => {
+  let options: Record<string, any[]> = {}
+  for (const fkTable of FKTables.value) {
+    let rows = fkTable.rows.map((r: any) => r.data[fkTable.columnName])
+    options[`${fkTable.tableId}`] = rows
+  }
+  return options
+})
+
 //  Validation for row editing
 const editValidation = computed(() => {
   let validation = { valid: true, msg: ''};
@@ -284,16 +297,21 @@ const loadTableData = async () => {
     currentTable.value = response.table
     tableRows.value = response.rows || []
 
+    console.log("Columns:", currentTable.value.columns)
+
     // Load all tables for FK dropdowns TODO
-    // for (const col of currentTable.value.columns) {
-    //   if (col.datatype === 'Foreign Key' && col.referencesTableId) {
-    //     const fkResponse = await $fetch(`/api/table/${col.referencesTableId}?sessionId=${sessionId}`)
-    //     FKTables.value.push({
-    //       tableId: col.referencesTableId,
-    //       rows: fkResponse.rows || []
-    //     })
-    //   }
-    // }
+    for (const col of currentTable.value.columns) {
+      if (col.datatype === 'Foreign Key' && col.foreignKey) {
+        const fkResponse = await $fetch(`/api/table/${col.foreignKey.tableId}?sessionId=${sessionId}`)
+        FKTables.value.push({
+          tableId: col.foreignKey.tableId,
+          tableName: fkResponse.table.name,
+          columnName: col.foreignKey.columnName,
+          rows: fkResponse.rows || []
+        })
+        console.log("FK Table Loaded:", FKTables.value  )
+      }
+    }
     
   } catch (error) {
     console.error('Failed to load table data:', error)
