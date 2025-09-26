@@ -361,13 +361,28 @@ const startDrag = (table: any, event: MouseEvent) => {
 // Zoom functionality
 const handleWheel = (event: WheelEvent) => {
   event.preventDefault()
-  
+
   const zoomFactor = 1.1
   const delta = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor
-  const newZoom = props.zoomLevel * delta
-  
-  const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom))
-  emit('updateZoom', clampedZoom)
+  const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, props.zoomLevel * delta))
+
+  // Get mouse position relative to SVG
+  const rect = canvasRef.value!.getBoundingClientRect()
+  const mouseX = event.clientX - rect.left
+  const mouseY = event.clientY - rect.top
+
+  // Convert mouse position to SVG coordinates before zoom
+  const svgX = panX.value + mouseX * (viewWidth.value / rect.width) / props.zoomLevel
+  const svgY = panY.value + mouseY * (viewHeight.value / rect.height) / props.zoomLevel
+
+  // After zoom, calculate new pan so the point under the mouse stays fixed
+  const newPanX = svgX - mouseX * (viewWidth.value / rect.width) / newZoom
+  const newPanY = svgY - mouseY * (viewHeight.value / rect.height) / newZoom
+
+  panX.value = Math.max(-MAX_PAN, Math.min(MAX_PAN, newPanX))
+  panY.value = Math.max(-MAX_PAN, Math.min(MAX_PAN, newPanY))
+
+  emit('updateZoom', newZoom)
 }
 
 watch(() => props.zoomLevel, (newZoom) => {
