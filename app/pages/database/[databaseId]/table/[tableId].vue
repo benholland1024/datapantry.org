@@ -112,6 +112,7 @@
               @keyup.escape="cancelEdit"
             />
             <USelectMenu
+              class="w-full"
               v-else-if="column.datatype === 'Foreign Key'"
               :items="['Option 1', 'Option 2', 'Option 3']"
               v-model="rowEditDraft.data[column.key]"
@@ -133,7 +134,7 @@
         </template>
         
         <!-- Actions column -->
-        <template #actions-cell="{ row }"">
+        <template #actions-cell="{ row }">
           <UButton 
             icon="i-lucide-trash-2" 
             size="sm" 
@@ -169,6 +170,7 @@ const loading = ref(true)             //  Is the page loading?
 const currentTable = ref<any>(null)   //  Current table info
 const tableRows = ref<any[]>([])      //  Rows of the table
 const selectedRows = ref<any>({  })   //  The selected rows in the table (marked true)
+const FKTables = ref<any[]>([])         //  All rows from all tables, for FK dropdowns
 
 // Editing state
 const isEditing = ref(false)
@@ -281,6 +283,17 @@ const loadTableData = async () => {
     
     currentTable.value = response.table
     tableRows.value = response.rows || []
+
+    // Load all tables for FK dropdowns TODO
+    // for (const col of currentTable.value.columns) {
+    //   if (col.datatype === 'Foreign Key' && col.referencesTableId) {
+    //     const fkResponse = await $fetch(`/api/table/${col.referencesTableId}?sessionId=${sessionId}`)
+    //     FKTables.value.push({
+    //       tableId: col.referencesTableId,
+    //       rows: fkResponse.rows || []
+    //     })
+    //   }
+    // }
     
   } catch (error) {
     console.error('Failed to load table data:', error)

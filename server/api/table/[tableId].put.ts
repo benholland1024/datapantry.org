@@ -94,6 +94,10 @@ export default defineEventHandler(async (event) => {
           .set({
             name: column.name,
             datatype: column.datatype,
+            foreignKey: column.foreignKey ? {
+              tableId: column.foreignKey.tableId,
+              columnName: column.foreignKey.columnName
+            } : null,
             isRequired: column.isRequired,
             constraint: column.constraint,
           })

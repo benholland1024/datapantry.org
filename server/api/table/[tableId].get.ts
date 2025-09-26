@@ -63,6 +63,8 @@ export default defineEventHandler(async (event) => {
       .from(rows)
       .where(eq(rows.tableId, tableId))
 
+    console.log('Loaded table columns:', columns )
+
     // Format the response
     const tableWithData = {
       id: table.id,
