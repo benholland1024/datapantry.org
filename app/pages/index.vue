@@ -42,7 +42,7 @@
               :y1="points[conn[0]]?.y"
               :x2="points[conn[1]]?.x"
               :y2="points[conn[1]]?.y"
-              stroke="#abb591"
+              stroke="#6b7581"
               stroke-width="2"
             />
             <circle
@@ -188,13 +188,32 @@ function resetMouse() {
   mouse.value = null
 }
 
+function auto_move() {
+  if (!mouse.value) {
+    mouse.value = {
+      x: Math.random() * width,
+      y: Math.random() * height
+    }
+  } else {
+    mouse.value.x += (Math.random() - 0.5) * 200
+    mouse.value.y += (Math.random() - 0.5) * 200
+    if (mouse.value.x < 0) mouse.value.x = 0
+    if (mouse.value.x > width) mouse.value.x = width
+    if (mouse.value.y < 0) mouse.value.y = 0
+    if (mouse.value.y > height) mouse.value.y = height
+  }
+}
+
+const interval = ref<any>(null);
 onMounted(() => {
   initPoints()
   animate()
+  interval.value = setInterval(auto_move, 1000)
 })
 
 onUnmounted(() => {
   cancelAnimationFrame(frameId)
+  clearInterval(interval.value)
 })
 
 

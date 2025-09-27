@@ -93,7 +93,7 @@
           <!-- Table name -->
           <foreignObject x="8" y="8" width="184" height="24">
             <div 
-              class="text-white font-semibold text-sm px-2 py-1 rounded cursor-pointer hover:bg-white/10 transition"
+              class="text-white font-semibold text-sm px-2 py-1"
               @dblclick.stop="selectTable(table.id)"
             >
               {{ table.name }}

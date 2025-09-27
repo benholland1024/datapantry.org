@@ -73,8 +73,31 @@
       <div class="bg-theme-bg-darker-2 p-4 border-b border-theme-bg-darker-1
         flex-shrink-0"
       >
-        <div class="flex items-center gap-4">
-          <h1 class="text-xl font-bold">{{ currentDatabase.name }}</h1>
+        <div class="flex items-center gap-4">    
+          <UInput v-model="databaseNameDraft" placeholder="" :ui="{ base: 'peer' }" 
+            tabindex="1" class="text-xl font-bold"
+          >
+            <label class="pointer-events-none absolute left-0 -top-3 text-highlighted 
+              text-xs font-medium px-1.5 transition-all peer-focus:-top-4
+              peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
+              peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed 
+              peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+            >
+              <span class="inline-flex bg-default px-1 opacity-50">Database name</span>
+            </label>
+          </UInput>
+          <UButton v-if="databaseNameDraft !== currentDatabase.name
+            && isDBNameValid.valid" 
+            variant="outline" class="cursor-pointer"
+            color="primary" @click="updateDatabaseName"
+          >
+            <UIcon name="uil:save" class="w-5 h-5" />
+          </UButton>
+          <div v-else-if="!isDBNameValid.valid" class="text-red-400 text-sm">
+            {{ isDBNameValid.message }}
+          </div>
+
+          <div class="flex-1"><!--  Spacer  --></div>
 
           <!-- Save status -->
           <div class="flex items-center gap-1 text-sm">
@@ -106,7 +129,6 @@
             </span>
           </div>
 
-          <div class="flex-1"><!--  Spacer  --></div>
           <UInputNumber
             v-model="zoomLevel"
             :step="0.1"
@@ -152,6 +174,7 @@
 import TableDetails from '@/components/SchemaEditor/TableDetails.vue'
 import SchemaCanvas from '~/components/SchemaEditor/SchemaCanvas.vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { ref, watch, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 
 const router = useRouter()
 const pendingRoute = ref<any>(null)
@@ -161,6 +184,7 @@ import { v4 as uuidv4 } from 'uuid'
 const route = useRoute()
 
 import { useDatabase } from '@/composables/useDatabase'
+import { is } from 'drizzle-orm'
 const { 
   userDatabases, 
   currentDatabase, 
@@ -175,6 +199,7 @@ const zoomLevel = ref(1)
 
 // Table data
 const databaseId = parseInt(route.params.databaseId as string)
+const databaseNameDraft = ref('')
 const selectedTable = ref<string | null>(null)
 const hasUnsavedChanges = ref(false)
 const tables = ref<any[]>([])
@@ -199,6 +224,7 @@ const loadSchema = async () => {
     const sessionId = localStorage.getItem('sessionId')
     const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`)
     tables.value = response.tables
+    databaseNameDraft.value = currentDatabase.value.name
   } catch (error) {
     console.error('Failed to load schema:', error)
     tables.value = [] // Start with empty schema if load fails
@@ -342,6 +368,38 @@ const discardChangesAndNavigate = () => {
   if (pendingRoute.value) {
     router.push(pendingRoute.value)
     pendingRoute.value = null
+  }
+}
+
+//  Check if database name is valid
+const isDBNameValid = computed(() => {
+  let isValid = { valid: true, message: '' }
+  isValid.valid = databaseNameDraft.value.trim().length > 0
+  if (!isValid.valid) {
+    isValid.message = 'Database name is required.'
+    return isValid
+  }
+  isValid.valid = userDatabases.value.every(db => {
+    return db.id === databaseId || db.name.toLowerCase() !== databaseNameDraft.value.trim().toLowerCase()
+  })
+  if (!isValid.valid) {
+    isValid.message = 'You already have a database with this name.'
+  }
+  return isValid
+})
+
+//  Rename database
+const updateDatabaseName = async () => {
+  if (!currentDatabase.value) return
+  try {
+    const sessionId = localStorage.getItem('sessionId')
+    await $fetch(`/api/database/${databaseId}/rename`, {
+      method: 'POST',
+      body: { newName: databaseNameDraft.value, sessionId }
+    })
+    currentDatabase.value.name = databaseNameDraft.value
+  } catch (error) {
+    console.error('Failed to rename database:', error)
   }
 }
 
