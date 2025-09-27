@@ -26,43 +26,19 @@
       </div>
     </div>
 
-    <!-- Simple create dialog -->
-    <div v-if="showCreateDialog" class="fixed inset-0 bg-black/50 
-      flex items-center justify-center">
-      <div class="bg-theme-bg-darker-2 p-6 rounded-lg">
-        <h3 class="text-xl mb-4">Create New Database</h3>
-        <UInput 
-          v-model="newDatabaseName" 
-          placeholder="Database name"
-          class="mb-4"
-          @keyup.enter="handleCreateDatabase"
-        />
-        <div class="flex gap-2">
-          <UButton @click="handleCreateDatabase" color="primary">Create</UButton>
-          <UButton @click="showCreateDialog = false" variant="ghost">Cancel</UButton>
-        </div>
-      </div>
-    </div>
+    
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useDatabase } from '@/composables/useDatabase'
 
-const { userDatabases, createDatabase, fetchUserDatabases } = useDatabase()
+const { 
+  userDatabases, 
+  showCreateDialog,
+  createDatabase, 
+  fetchUserDatabases 
+} = useDatabase()
 
-const showCreateDialog = ref(false)
-const newDatabaseName = ref('')
 
-const handleCreateDatabase = async () => {
-  if (!newDatabaseName.value.trim()) return
-  
-  try {
-    await createDatabase(newDatabaseName.value.trim())
-    newDatabaseName.value = ''
-    showCreateDialog.value = false
-  } catch (error) {
-    console.error('Failed to create database:', error)
-  }
-}
 </script>

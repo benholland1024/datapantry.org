@@ -191,7 +191,8 @@ const {
   loading,
   addTableToDatabase,
   updateTableInDatabase,
-  removeTableFromDatabase
+  removeTableFromDatabase,
+  isDatabaseNameValid,
 } = useDatabase()
 
 // Canvas state
@@ -371,21 +372,9 @@ const discardChangesAndNavigate = () => {
   }
 }
 
-//  Check if database name is valid
+//  Check if database name is valid. Must be non-empty and unique among user's databases.
 const isDBNameValid = computed(() => {
-  let isValid = { valid: true, message: '' }
-  isValid.valid = databaseNameDraft.value.trim().length > 0
-  if (!isValid.valid) {
-    isValid.message = 'Database name is required.'
-    return isValid
-  }
-  isValid.valid = userDatabases.value.every(db => {
-    return db.id === databaseId || db.name.toLowerCase() !== databaseNameDraft.value.trim().toLowerCase()
-  })
-  if (!isValid.valid) {
-    isValid.message = 'You already have a database with this name.'
-  }
-  return isValid
+  return isDatabaseNameValid(databaseNameDraft.value, databaseId)
 })
 
 //  Rename database

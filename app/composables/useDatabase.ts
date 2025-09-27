@@ -37,6 +37,7 @@ const currentDatabase = ref<DatabaseStructure | null>(null)
 const loading = ref(true)   //  True until we know if user is logged in
 const databasesLoaded = ref(false) // True when databases have been loaded
 const error = ref<string | null>(null)
+const showCreateDialog = ref(false)  //  Opens a popup modal for naming a new db
 
 export function useDatabase() {
 
@@ -140,6 +141,24 @@ export function useDatabase() {
     }
   }
 
+  //  Validate a new database name. Must be non-empty and unique for the user.
+  //  Used in the create database dialog and in renaming a database.
+  const isDatabaseNameValid = (name: string, databaseId: number | null) => {
+    let isValid = { valid: true, message: '' }
+    isValid.valid = name.trim().length > 0
+    if (!isValid.valid) {
+      isValid.message = 'Database name is required.'
+      return isValid
+    }
+    isValid.valid = userDatabases.value.every(db => {
+      return db.id === databaseId || db.name.trim().toLowerCase() !== name.trim().toLowerCase()
+    })
+    if (!isValid.valid) {
+      isValid.message = `You already have a database with the name "${name}".`
+    }
+    return isValid
+  }
+
   return {
     //  Variables:
     currentUser,
@@ -148,6 +167,7 @@ export function useDatabase() {
     loading,
     databasesLoaded,
     error,
+    showCreateDialog,
 
     //  Methods:
     setCurrentUser,
@@ -157,5 +177,6 @@ export function useDatabase() {
     addTableToDatabase,
     updateTableInDatabase,
     removeTableFromDatabase,
+    isDatabaseNameValid,
   }
 }

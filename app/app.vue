@@ -49,6 +49,32 @@
         </ClientOnly>
       </div>
 
+      <!-- Database creation -->
+      <UModal :open="showCreateDialog"
+        title="Create New Database"
+        description="Enter a database name to create a new database."
+      >
+        <template #content>
+          <div class="p-8">
+            <h3 class="text-xl mb-4">Create New Database</h3>
+            <UInput 
+              v-model="newDatabaseName" 
+              placeholder="Database name"
+              class="mb-4"
+              @keyup.enter="handleCreateDatabase"
+            />
+            <div v-if="!validDBName.valid && showCreateDialog" class="text-error mb-4">
+              {{ validDBName.message }}
+            </div>
+            <div v-else class="mb-4">&nbsp;</div>
+            <div class="flex gap-2">
+              <UButton @click="handleCreateDatabase" color="primary">Create</UButton>
+              <UButton @click="showCreateDialog = false" variant="ghost">Cancel</UButton>
+            </div>
+          </div>
+        </template>
+      </UModal>
+
       <!-- Main content area -->
       <div class="flex">
         <UNavigationMenu orientation="vertical" :items="sidebarMenu" 
@@ -78,11 +104,34 @@ const {
   loading, 
   databasesLoaded,
   signOut, 
-  userDatabases
+  showCreateDialog,
+  createDatabase,
+  userDatabases,
+  isDatabaseNameValid
 } = useDatabase()
 
 // Get the current route
 const route = ref(useRoute());
+
+const newDatabaseName = ref('')
+
+const handleCreateDatabase = async () => {
+  if (!newDatabaseName.value.trim()) return
+  
+  try {
+    await createDatabase(newDatabaseName.value.trim())
+    showCreateDialog.value = false
+    newDatabaseName.value = ''
+
+  } catch (error) {
+    console.error('Failed to create database:', error)
+  }
+}
+
+//  Validate database name.  Must be non-empty and unique among user's databases.
+const validDBName = computed(() => {
+  return isDatabaseNameValid(newDatabaseName.value, null)
+})
 
 // Check session immediately on client-side (non-blocking)
 if (process.client) {

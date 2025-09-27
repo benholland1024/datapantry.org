@@ -77,7 +77,6 @@ const connections = ref<[number, number][]>([])
 const mouse = ref<{ x: number, y: number } | null>(null)
 
 function initPoints() {
-  const windowWidth = window.innerWidth;
 
   // Calculate grid size for roughly even distribution
   const cols = Math.ceil(Math.sqrt(numPoints * width / height));
@@ -181,7 +180,6 @@ function handleMouse(e: MouseEvent) {
     x: e.clientX - rect.left + 150,
     y: e.clientY - rect.top + 150
   }
-  console.log("Updating mouse position", mouse.value);
 }
 
 function resetMouse() {
