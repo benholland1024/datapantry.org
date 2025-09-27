@@ -93,7 +93,7 @@
           >
             <UIcon name="uil:save" class="w-5 h-5" />
           </UButton>
-          <div v-else-if="!isDBNameValid.valid" class="text-red-400 text-sm">
+          <div v-else-if="!isDBNameValid.valid" class="text-red-400 text-sm w-48 border border-blue-400">
             {{ isDBNameValid.message }}
           </div>
 
