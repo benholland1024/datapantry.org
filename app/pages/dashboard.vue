@@ -26,7 +26,7 @@
       <div class="w-64 h-32 border-bg3 border-2 border-dashed rounded-lg flex 
         items-center justify-center text-lg text-white/80 cursor-pointer
         hover:border-white hover:text-white transition"
-        @click="showCreateDialog = true"
+        @click="showCreateDBModal = true"
       >
         + Create New Database
       </div>
@@ -44,7 +44,7 @@ const copied = ref<Record<string, boolean>>({})
 
 const { 
   userDatabases, 
-  showCreateDialog,
+  showCreateDBModal,
   createDatabase, 
   fetchUserDatabases 
 } = useDatabase()

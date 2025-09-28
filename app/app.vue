@@ -50,7 +50,7 @@
       </div>
 
       <!-- Database creation -->
-      <UModal :open="showCreateDialog"
+      <UModal :open="showCreateDBModal"
         title="Create New Database"
         description="Enter a database name to create a new database."
       >
@@ -63,13 +63,56 @@
               class="mb-4"
               @keyup.enter="handleCreateDatabase"
             />
-            <div v-if="!validDBName.valid && showCreateDialog" class="text-error mb-4">
+            <div v-if="!validDBName.valid && showCreateDBModal" class="text-error mb-4">
               {{ validDBName.message }}
             </div>
             <div v-else class="mb-4">&nbsp;</div>
             <div class="flex gap-2">
               <UButton @click="handleCreateDatabase" color="primary">Create</UButton>
-              <UButton @click="showCreateDialog = false" variant="ghost">Cancel</UButton>
+              <UButton @click="showCreateDBModal = false" variant="ghost">Cancel</UButton>
+            </div>
+          </div>
+        </template>
+      </UModal>
+
+      <!-- Database deletion impact modal -->
+      <UModal v-model:open="showDeleteDBModal"
+        title="Confirm Delete Database"
+        description="The following items will be deleted. This action cannot be undone!"
+      >
+        <template #content>
+          <div class="p-8">
+            <h3 class="text-xl mb-4 font-bold">Confirm Delete Database</h3>
+            <div v-if="deleteDBImpact">
+              <p class="mb-4">The following items will be deleted:</p>
+              <ul class="list-disc list-inside mb-4">
+                <li>Database: {{ deleteDBImpact.databaseName }}</li>
+                <li>Tables: {{ deleteDBImpact.tableCount }}</li>
+                <li>Rows: {{ deleteDBImpact.totalRowCount }}</li>
+              </ul>
+              <p class="mb-4 text-error font-semibold">
+                This action cannot be undone!
+              </p>
+              <p class="mb-4">
+                To confirm, please type your username and the database name, like this: 
+                <strong>{{ currentUser && currentUser.username }}/{{ deleteDBImpact.databaseName }}</strong> below:
+              </p>
+              <UInput 
+                v-model="deleteDBImpact.confirmationInput" 
+                placeholder="Type to confirm"
+                class="mb-4"
+              />
+              <div class="flex gap-2">
+                <UButton @click="deleteDatabase(deleteDBImpact.databaseId)" color="error"
+                  :disabled="deleteDBImpact.confirmationInput !== (currentUser?.username + '/' + deleteDBImpact.databaseName)"
+                >
+                  Delete
+                </UButton>
+                <UButton @click="showDeleteDBModal = false" variant="ghost">Cancel</UButton>
+              </div>
+            </div>
+            <div v-else>
+              <p>Loading...</p>
             </div>
           </div>
         </template>
@@ -100,14 +143,18 @@ import { useDatabase } from '@/composables/useDatabase'
 
 const { 
   currentUser, 
-  setCurrentUser, 
   loading, 
   databasesLoaded,
-  signOut, 
-  showCreateDialog,
-  createDatabase,
+  showCreateDBModal,
   userDatabases,
-  isDatabaseNameValid
+  showDeleteDBModal,
+  deleteDBImpact,
+
+  setCurrentUser, 
+  signOut, 
+  createDatabase,
+  isDatabaseNameValid,
+  deleteDatabase
 } = useDatabase()
 
 // Get the current route
@@ -120,7 +167,7 @@ const handleCreateDatabase = async () => {
   
   try {
     await createDatabase(newDatabaseName.value.trim())
-    showCreateDialog.value = false
+    showCreateDBModal.value = false
     newDatabaseName.value = ''
 
   } catch (error) {

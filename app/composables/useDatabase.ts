@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 
+//  Data structures
+
 export interface UserStructure {
   id: number
   username: string
@@ -41,9 +43,13 @@ const currentDatabase = ref<DatabaseStructure | null>(null)
 const loading = ref(true)   //  True until we know if user is logged in
 const databasesLoaded = ref(false) // True when databases have been loaded
 const error = ref<string | null>(null)
-const showCreateDialog = ref(false)  //  Opens a popup modal for naming a new db
+const showCreateDBModal = ref(false)  //  Opens a popup modal for naming a new db
+const showDeleteDBModal = ref(false)  //  Opens a popup modal for confirming db deletion
+const deleteDBImpact = ref<any>(null) //  Stores the impact data when deleting a database
 
 export function useDatabase() {
+
+  const toast = useToast()
 
   // Set the current user AND fetch their databases.
   const setCurrentUser = (user: UserStructure) => {
@@ -145,6 +151,67 @@ export function useDatabase() {
     }
   }
 
+  //  Open a modal to confirm deletion of a database and get delete impact
+  const getDeleteDatabaseImpact = async(databaseId: number) => {
+    const sessionId = localStorage.getItem('sessionId')
+    
+    if (!sessionId) {
+      error.value = 'No active session'
+      return
+    }
+
+    try {
+      const response = await $fetch(`/api/database/${databaseId}/impact?sessionId=${sessionId}`, {
+        method: 'GET',
+      })
+      deleteDBImpact.value = response
+      showDeleteDBModal.value = true
+    } catch (error) {
+      console.error('Error fetching delete impact:', error)
+    }
+    
+  }
+
+  //  Delete a database
+  const deleteDatabase = async (databaseId: number) => {
+    const sessionId = localStorage.getItem('sessionId')
+    
+    if (!sessionId) {
+      error.value = 'No active session'
+      return
+    }
+  
+    try {
+      await $fetch<any>(`/api/database/${databaseId}?sessionId=${sessionId}`, {
+        method: 'DELETE',
+        body: { sessionId }
+      })
+  
+      // Remove the database from the local state
+      userDatabases.value = userDatabases.value.filter(db => db.id !== Number(databaseId))
+
+      showDeleteDBModal.value = false
+      deleteDBImpact.value = null
+      
+      // If the deleted database was the current one, clear it
+      currentDatabase.value = null
+      navigateTo('/dashboard')
+
+      toast.add({
+        title: 'Deleted Database',
+        description: `The database "${databaseId}" has been deleted.`,
+        icon: 'material-symbols:delete-outline',
+        color: 'error',
+        progress: false,
+        duration: 5000
+      })
+      
+    } catch (error: any) {
+      error.value = 'Failed to delete database'
+      throw error
+    }
+  }
+
   //  Validate a new database name. Must be non-empty and unique for the user.
   //  Used in the create database dialog and in renaming a database.
   const isDatabaseNameValid = (name: string, databaseId: number | null) => {
@@ -171,7 +238,9 @@ export function useDatabase() {
     loading,
     databasesLoaded,
     error,
-    showCreateDialog,
+    showCreateDBModal,
+    showDeleteDBModal,
+    deleteDBImpact,
 
     //  Methods:
     setCurrentUser,
@@ -181,6 +250,8 @@ export function useDatabase() {
     addTableToDatabase,
     updateTableInDatabase,
     removeTableFromDatabase,
+    getDeleteDatabaseImpact,
+    deleteDatabase,
     isDatabaseNameValid,
   }
 }

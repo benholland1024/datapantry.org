@@ -108,8 +108,16 @@
           <UButton color="primary" variant="outline" class="cursor-pointer" 
             @click="copyAPIKey(currentDatabase.apiKey)"
           >
-            <UIcon name="material-symbols:content-copy" class="inline-block mr-1" />
+            <UIcon name="si:copy-line" class="inline-block mr-1" />
             {{ apiKeyCopied ? 'Copied!' : 'Copy API Key' }}
+          </UButton>
+          <!--  Delete database  -->
+          
+          <UButton color="neutral" variant="outline" class="cursor-pointer" 
+            @click="getDeleteDatabaseImpact(currentDatabase.id)"
+          >
+            <UIcon name="material-symbols:delete-outline" class="inline-block mr-1" />
+            Delete Database
           </UButton>
 
           <div class="flex-1"><!--  Spacer  --></div>
@@ -174,7 +182,7 @@
         @unsaved-changes="hasUnsavedChanges = $event"
         @close="closeTableDetails"
         @update-table="handleTableUpdate"
-        @delete-table="getDeleteImpact"
+        @delete-table="getDeleteTableImpace"
       />
       
     </div>
@@ -199,7 +207,6 @@ import { v4 as uuidv4 } from 'uuid'
 const route = useRoute()
 
 import { useDatabase } from '@/composables/useDatabase'
-import { is } from 'drizzle-orm'
 const { 
   userDatabases, 
   currentDatabase, 
@@ -207,6 +214,8 @@ const {
   addTableToDatabase,
   updateTableInDatabase,
   removeTableFromDatabase,
+  getDeleteDatabaseImpact,
+  deleteDatabase,
   isDatabaseNameValid,
 } = useDatabase()
 
@@ -431,7 +440,7 @@ onMounted(() => {
         !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
       
       event.preventDefault()
-      getDeleteImpact(selectedTable.value)
+      getDeleteTableImpace(selectedTable.value)
     }
   }
   window.addEventListener('keydown', handleKeyDown)
@@ -471,7 +480,7 @@ useHead({
   title: `${currentDatabase.value?.name || 'Database'} - DataPantry`
 })
 
-const getDeleteImpact = async (tableId: string) => {
+const getDeleteTableImpace = async (tableId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     loadingDeleteImpact.value = true
