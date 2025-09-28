@@ -50,7 +50,7 @@
       </div>
 
       <!-- Database creation -->
-      <UModal :open="showCreateDBModal"
+      <UModal v-model:open="showCreateDBModal"
         title="Create New Database"
         description="Enter a database name to create a new database."
       >
@@ -248,11 +248,20 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
           to: `/database/${database.id}/table/${table.id}`
         }))
       })),
+      {
+        label: 'Create new database',
+        icon: 'ic:baseline-plus',
+        ui: { linkLabel: 'cursor-pointer' },
+        onSelect() {
+          showCreateDBModal.value = true
+        }
+      }
     ],
     [
       {
         label: 'How to Use',
         icon: 'i-lucide-circle-help',
+        ui: { linkLabel: 'cursor-pointer' },
         open: true,
         defaultOpen: true,
       },
