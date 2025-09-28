@@ -45,9 +45,11 @@ export default defineEventHandler(async (event) => {
     const [newDatabase] = await db.insert(databases).values({
       name,
       userId: sessionWithUser.userId,
+      apiKey: crypto.randomUUID()
     }).returning({
       id: databases.id,
       name: databases.name,
+      apiKey: databases.apiKey,
       createdAt: databases.createdAt,
     })
 

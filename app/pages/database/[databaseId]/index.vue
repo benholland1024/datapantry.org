@@ -73,29 +73,44 @@
       <div class="bg-theme-bg-darker-2 p-4 border-b border-theme-bg-darker-1
         flex-shrink-0"
       >
-        <div class="flex items-center gap-4">    
-          <UInput v-model="databaseNameDraft" placeholder="" :ui="{ base: 'peer' }" 
-            tabindex="1" class="text-xl font-bold"
+        <div class="flex items-center gap-4">  
+
+          <!-- Database name input -->
+          <UTooltip :open="!isDBNameValid.valid" 
+            :text="isDBNameValid.message" placement="bottom"
+            :ui="{ content: 'text-error border border-error', arrow: 'fill-error' }" 
+            arrow
           >
-            <label class="pointer-events-none absolute left-0 -top-3 text-highlighted 
-              text-xs font-medium px-1.5 transition-all peer-focus:-top-4
-              peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
-              peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed 
-              peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+            <UInput v-model="databaseNameDraft" placeholder="" :ui="{ base: 'peer' }" 
+              tabindex="1" class="text-xl font-bold"
             >
-              <span class="inline-flex bg-default px-1 opacity-50">Database name</span>
-            </label>
-          </UInput>
-          <UButton v-if="databaseNameDraft !== currentDatabase.name
-            && isDBNameValid.valid" 
-            variant="outline" class="cursor-pointer"
+              <label class="pointer-events-none absolute left-0 -top-3 text-highlighted 
+                text-xs font-medium px-1.5 transition-all peer-focus:-top-4
+                peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
+                peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed 
+                peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+              >
+                <span class="inline-flex bg-default px-1 opacity-50">Database name</span>
+              </label>
+            </UInput>
+          </UTooltip>
+          <!--  Database name input save button  -->
+          <UButton v-if="databaseNameDraft !== currentDatabase.name" 
+            :disabled="!isDBNameValid.valid"
+            variant="outline" class="cursor-pointer w-10"
             color="primary" @click="updateDatabaseName"
           >
             <UIcon name="uil:save" class="w-5 h-5" />
           </UButton>
-          <div v-else-if="!isDBNameValid.valid" class="text-red-400 text-sm w-48 border border-blue-400">
-            {{ isDBNameValid.message }}
-          </div>
+          <div v-else class="w-10 h-5"><!--  Spacer  --></div>
+          
+          <!--  Copy API key button  -->
+          <UButton color="primary" variant="outline" class="cursor-pointer" 
+            @click="copyAPIKey(currentDatabase.apiKey)"
+          >
+            <UIcon name="material-symbols:content-copy" class="inline-block mr-1" />
+            {{ apiKeyCopied ? 'Copied!' : 'Copy API Key' }}
+          </UButton>
 
           <div class="flex-1"><!--  Spacer  --></div>
 
@@ -206,6 +221,7 @@ const hasUnsavedChanges = ref(false)
 const tables = ref<any[]>([])
 const isLoading = ref(false)
 const saveStatus = ref<'idle' | 'editing' | 'saving' | 'saved' | 'error'>('idle')
+const apiKeyCopied = ref(false)
 
 //  Delete impact modal
 const openDeleteImpactModal = ref(false)
@@ -277,6 +293,19 @@ const debouncedSave = debounce(async () => {
   saveStatus.value = 'saving' // Change to 'saving' when actually saving
   await saveSchema()
 }, 500) // Save 1.5s after user stops typing
+
+// Copy API key to clipboard
+const copyAPIKey = async (apiKey: string) => {
+  try {
+    await navigator.clipboard.writeText(apiKey)
+    apiKeyCopied.value = true
+    setTimeout(() => {
+      apiKeyCopied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy API Key:', err)
+  }
+}
 
 // Also save on page unload
 onBeforeUnmount(() => {

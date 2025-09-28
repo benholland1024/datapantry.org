@@ -14,6 +14,12 @@
           {{ database.name }}
         </h2>
         <p class="p-2">Tables: {{ database.tables.length }}</p>
+        <UButton color="secondary" size="sm" class="m-2" 
+          @click.stop.prevent="copyToClipboard(database.apiKey)"
+        >
+          <UIcon name="material-symbols:content-copy" class="inline-block mr-1" />
+          {{ copied[database.apiKey] ? 'Copied!' : 'Copy API Key' }}
+        </UButton>
       </NuxtLink>
       
       <!-- Create new database button -->
@@ -32,6 +38,9 @@
 
 <script lang="ts" setup>
 import { useDatabase } from '@/composables/useDatabase'
+import { ref } from 'vue'
+
+const copied = ref<Record<string, boolean>>({})
 
 const { 
   userDatabases, 
@@ -40,5 +49,16 @@ const {
   fetchUserDatabases 
 } = useDatabase()
 
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    copied.value[text] = true
+    setTimeout(() => {
+      copied.value[text] = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy: ', err)
+  }
+}
 
 </script>

@@ -50,6 +50,11 @@ If you need to restart the database, deleting all data:
 pnpm db:reset  # Remove and recreate everything
 ```
 
+Any time `server/postgresDB/schema.ts` is edited, remember to run this:
+```bash
+pnpm db:generate && pnpm db:migrate
+```
+
 ## 🖥️ Production
 
 Build the application for production:

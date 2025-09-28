@@ -22,6 +22,7 @@ export const databases = pgTable('databases', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   userId: integer('user_id').notNull().references(() => users.id),
+  apiKey: varchar('api_key', { length: 36 }).unique().notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

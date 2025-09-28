@@ -9,6 +9,10 @@ export interface UserStructure {
 export interface DatabaseStructure {
   id: number
   name: string
+  apiKey: string
+  userId: number
+  createdAt: string
+  updatedAt: string
   tables: TableStructure[]
 }
 

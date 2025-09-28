@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
       .select({
         id: databases.id,
         name: databases.name,
+        apiKey: databases.apiKey,
         createdAt: databases.createdAt,
       })
       .from(databases)

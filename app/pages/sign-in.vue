@@ -56,7 +56,7 @@
 
       </div>
 
-      <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="text-error text-sm">{{ errorMessage }}</p>
 
     </div>
   </div>
