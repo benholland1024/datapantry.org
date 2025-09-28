@@ -111,6 +111,10 @@ export default defineEventHandler(async (event) => {
             tableId: tableId,
             name: column.name,
             datatype: column.datatype,
+            foreignKey: column.foreignKey ? {
+              tableId: column.foreignKey.tableId,
+              columnName: column.foreignKey.columnName
+            } : null,
             isRequired: column.isRequired,
             constraint: column.constraint,
             orderIndex: 100, // TODO: determine order
