@@ -259,11 +259,12 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
     ],
     [
       {
-        label: 'How to Use',
-        icon: 'i-lucide-circle-help',
+        label: 'API Guide',
+        icon: 'uil:brackets-curly',
         ui: { linkLabel: 'cursor-pointer' },
         open: true,
         defaultOpen: true,
+        to: '/api-docs'
       },
       {
         label: 'Examples',

@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@nuxt/image": "1.11.0",
-    "@nuxt/ui": "3.3.3",
+    "@nuxt/ui": "4.0.0",
     "@tailwindcss/vite": "^4.1.13",
     "@types/bcryptjs": "^3.0.0",
     "@types/flubber": "^0.4.0",
