@@ -16,7 +16,7 @@
     <div class="mb-4">
       <label class="block text-sm font-medium text-white mb-2 transition-colors">Table Name</label>
       <UInput 
-        :value="selectedTableName" 
+        :value="selectedTableNewName" 
         :color="validationError && validationError.tableName ? 'error' : 'neutral'"
         placeholder="Table name"
         @input="updateTableName($event.target.value)"
@@ -149,13 +149,13 @@
               Are you sure you want to save these changes to the table?
             </p>
             <div class="max-h-64 overflow-y-auto space-y-2">
-              <div v-if="selectedTableName !== selectedTableData.name" class="p-2 border border-gray-600 rounded text-sm">
+              <div v-if="selectedTableNewName !== selectedTableData.name" class="p-2 border border-gray-600 rounded text-sm">
                 <p class="font-semibold">
                   Table name changed:
                 </p>
                 <ul class="text-sm list-disc list-outside ml-5">
                   <li>
-                    Table name: "{{ selectedTableData.name }}" → "{{ selectedTableName }}"
+                    Table name: "{{ selectedTableData.name }}" → "{{ selectedTableNewName }}"
                     <div class="text-xs text-gray-400 italic">
                       Any references to this table in foreign keys will be updated automatically.
                     </div>
@@ -246,6 +246,11 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from 'uuid'
 
+import { useDatabase } from '@/composables/useDatabase'
+const { 
+  currentDatabase, 
+} = useDatabase()
+
 // Props
 const props = defineProps<{
   selectedTable: string | null
@@ -264,7 +269,7 @@ const columnsSnapshot = ref([])
 const loadingImpact = ref<boolean>(false)
 const impact = ref<any>({})
 const openImpactModal = ref<boolean>(false)
-const selectedTableName = ref<string>('')    //  Only needed for table name validation
+const selectedTableNewName = ref<string>('')    //  Only needed for table name validation
 
 
 //                       //
@@ -284,10 +289,10 @@ const validationError = computed(() => {
 
   // Validate table name
   if (selectedTableData.value) {
-    if (!selectedTableName.value || selectedTableName.value.trim() === '') {
+    if (!selectedTableNewName.value || selectedTableNewName.value.trim() === '') {
       errors.tableName = 'Table name cannot be empty.'
       errors.err = true
-    } else if (props.tables.some(t => t.name.trim() === selectedTableName.value.trim() 
+    } else if (props.tables.some(t => t.name.trim() === selectedTableNewName.value.trim() 
                && t.name !== props.selectedTable)) {
       errors.tableName = 'Table name must be unique.'
       errors.err = true
@@ -321,8 +326,8 @@ const validationError = computed(() => {
 // Datatype options: [String, Number, + FK - other tables...]
 const datatypeOptions = computed(() => {
   const baseOptions = [
-    { label: 'String', value: 'String' },
-    { label: 'Number', value: 'Number' }
+    { label: 'TEXT', value: 'TEXT' },
+    { label: 'REAL', value: 'REAL' },
   ]
   
   // Add FK options for all other tables
@@ -344,16 +349,16 @@ const selectedTableData = computed(() => {
 })
 watch(selectedTableData, (newVal) => {
   if (newVal) {
-    selectedTableName.value = newVal.name
+    selectedTableNewName.value = newVal.name
   } else {
-    selectedTableName.value = ''
+    selectedTableNewName.value = ''
   }
 }, { immediate: true })
 
 const hasUnsavedChanges = computed(() => {
   let hasUnsavedChanges = false
   if (selectedTableData && selectedTableData.value) {
-    hasUnsavedChanges = columnChanges.value.length > 0 || (selectedTableName.value !== selectedTableData.value.name)
+    hasUnsavedChanges = columnChanges.value.length > 0 || (selectedTableNewName.value !== selectedTableData.value.name)
   }
   return hasUnsavedChanges
 })
@@ -503,7 +508,7 @@ const getConstraintItems = (columnIndex: number) => {
 
 // Update functions - emit changes to parent
 const updateTableName = (value: string) => {
-  selectedTableName.value = value
+  selectedTableNewName.value = value
   // if (selectedTableData.value && !validationError.value?.tableName) {
   //   selectedTableData.value.name = value
   //   emit('updateTable', props.selectedTable!, { name: value })
@@ -597,7 +602,7 @@ const addColumn = () => {
     selectedTableData.value.columns.push({
       id: uuidv4(),
       name: 'new_column',
-      datatype: 'String',
+      datatype: 'TEXT',
       constraint: 'none',
       isRequired: false
     })
@@ -624,10 +629,12 @@ const getChangeImpact = async () => {
     const sessionId = localStorage.getItem('sessionId')
     loadingImpact.value = true
     openImpactModal.value = true
-    
-    const response = await $fetch(`/api/table/${selectedTableData.value.id}/impact?sessionId=${sessionId}`, {
-      method: 'GET',
-    })
+
+    const response = await $fetch(
+      `/api/database/${currentDatabase.value?.id}/table/impact`
+        + `?tableName=${selectedTableData.value.name}&sessionId=${sessionId}`, 
+      { method: 'GET', }
+    )
 
     loadingImpact.value = false
     impact.value = response
@@ -641,19 +648,20 @@ const confirmChanges = () => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     openImpactModal.value = false
-    
-    $fetch(`/api/table/${selectedTableData.value.id}?sessionId=${sessionId}`, {
+
+    $fetch(`/api/database/${currentDatabase.value?.id}/table?tableName=${selectedTableData.value.name}&sessionId=${sessionId}`, {
       method: 'PUT',
       body: { 
-        tableName: selectedTableName.value,
+        newTableName: selectedTableNewName.value,
         columnChanges: columnChanges.value,
         columns: selectedTableData.value.columns,
         preserveData: true // TODO: make this an option in the UI
       }
     }).then(() => {
       impact.value = {}
+
       columnsSnapshot.value = JSON.parse(JSON.stringify(selectedTableData.value.columns))
-      emit('updateTable', props.selectedTable!, { name: selectedTableName.value })
+      emit('updateTable', props.selectedTable!, { name: selectedTableNewName.value })
     })
     
   } catch (error) {

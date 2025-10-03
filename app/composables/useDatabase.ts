@@ -130,10 +130,10 @@ export function useDatabase() {
   }
 
   // Update table name in sidebar
-  const updateTableInDatabase = (databaseId: number, tableId: string, updates: any) => {
+  const updateTableInDatabase = (databaseId: number, tableName: string, updates: any) => {
     const database = userDatabases.value.find(db => db.id === databaseId)
     if (database) {
-      const table = database.tables.find(t => t.id === tableId)
+      const table = database.tables.find(t => t.name === tableName)
       if (table && updates.name) {
         table.name = updates.name
       }

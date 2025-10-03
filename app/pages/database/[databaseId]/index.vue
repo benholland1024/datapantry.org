@@ -348,15 +348,18 @@ watch(currentDatabase, () => {
 }, { immediate: true })
 
 
-const handleTableUpdate = (tableId: string, updates: any) => {
-  const tableIndex = tables.value.findIndex(table => table.id === tableId)
+const handleTableUpdate = (tableName: string, updates: any) => {
+  console.log("Handling table update:", tableName, updates)
+  const tableIndex = tables.value.findIndex(table => table.name === tableName)
   if (tableIndex !== -1) {
     // Update local table
     Object.assign(tables.value[tableIndex], updates)
-    
+
+    console.log("Updating name? ", updates.name)
     // Update sidebar if name changed
     if (updates.name) {
-      updateTableInDatabase(databaseId, tableId, updates)
+      console.log("Updating table name in sidebar:", updates.name)
+      updateTableInDatabase(databaseId, tableName, updates)
     }
   }
 }
