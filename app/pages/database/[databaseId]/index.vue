@@ -251,6 +251,16 @@ const loadSchema = async () => {
     const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`)
     console.log('Loaded schema:', response)
     tables.value = response.tables
+
+    //  Add unique IDs to table columns, for editing
+    tables.value.forEach(table => {
+      table.columns.forEach((column: any) => {
+        if (!column.id) {
+          column.id = uuidv4()
+        }
+      })
+    })
+
     databaseNameDraft.value = currentDatabase.value.name
   } catch (error) {
     console.error('Failed to load schema:', error)
@@ -349,16 +359,13 @@ watch(currentDatabase, () => {
 
 
 const handleTableUpdate = (tableName: string, updates: any) => {
-  console.log("Handling table update:", tableName, updates)
   const tableIndex = tables.value.findIndex(table => table.name === tableName)
   if (tableIndex !== -1) {
     // Update local table
     Object.assign(tables.value[tableIndex], updates)
 
-    console.log("Updating name? ", updates.name)
     // Update sidebar if name changed
     if (updates.name) {
-      console.log("Updating table name in sidebar:", updates.name)
       updateTableInDatabase(databaseId, tableName, updates)
     }
   }

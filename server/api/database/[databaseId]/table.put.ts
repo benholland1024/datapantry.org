@@ -160,13 +160,22 @@ export default defineEventHandler(async (event) => {
 function buildCreateTableSQL(tableName: string, columns: any[]): string {
   const columnDefs = columns.map(col => {
     let def = `"${col.name}" `
+
+    console.log("Defining column:", col.name, "Type:", col.datatype, "Constraint:", col.constraint, "IsRequired:", col.isRequired)
     
     // Map datatype to SQLite type
     switch(col.datatype.toLowerCase()) {
       case 'number':
         def += 'REAL'
         break
+      case 'real':
+        console.log("Using REAL type for column:", col.name) // Debug log
+        def += 'REAL'
+        break
       case 'string':
+        def += 'TEXT'
+        break
+      case 'text':
         def += 'TEXT'
         break
       case 'foreign key':
@@ -179,6 +188,8 @@ function buildCreateTableSQL(tableName: string, columns: any[]): string {
       default:
         def += 'TEXT'
     }
+
+    console.log("Column definition so far:", def) // Debug log
     
     // Add constraints
     if (col.constraint === 'primary') {
