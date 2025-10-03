@@ -37,10 +37,17 @@ sudo lsof -i :5432  # Check what's using port 5432
 sudo systemctl stop postgresql # Stop local postgres, if needed
 ```
 
-To look at the database data, run this, then go to the URL it suggests:
+To look at the Postgres database data, run this, then go to the URL it suggests:
 
 ```bash
 pnpm db:studio
+```
+
+To look at the data in an SQLite database, I recommend installing sqlitebrowser. 
+Then you can run 
+
+```bash
+sqlitebrowser server/userDBs/{userID}/{dbID}.sqlite 
 ```
 
 If you need to restart the database, deleting all data:

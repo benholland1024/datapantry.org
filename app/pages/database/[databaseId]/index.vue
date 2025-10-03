@@ -169,7 +169,7 @@
         :tables="tables"
         :selected-table="selectedTable"
         :zoom-level="zoomLevel"
-        @select-table="(tableId) => selectedTable = tableId"
+        @select-table="(tableName) => selectedTable = tableName"
         @deselect-table="deselectTableOnPan()"
         @update-table="handleTableUpdate"
         @create-table="createTable"
@@ -182,7 +182,7 @@
         @unsaved-changes="hasUnsavedChanges = $event"
         @close="closeTableDetails"
         @update-table="handleTableUpdate"
-        @delete-table="getDeleteTableImpace"
+        @delete-table="getDeleteTableImpact"
       />
       
     </div>
@@ -225,7 +225,7 @@ const zoomLevel = ref(1)
 // Table data
 const databaseId = parseInt(route.params.databaseId as string)
 const databaseNameDraft = ref('')
-const selectedTable = ref<string | null>(null)
+const selectedTable = ref<string | null>(null)  //  Name of currently selected table
 const hasUnsavedChanges = ref(false)
 const tables = ref<any[]>([])
 const isLoading = ref(false)
@@ -249,6 +249,7 @@ const loadSchema = async () => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`)
+    console.log('Loaded schema:', response)
     tables.value = response.tables
     databaseNameDraft.value = currentDatabase.value.name
   } catch (error) {
@@ -276,6 +277,8 @@ const saveSchema = async () => {
       method: 'POST',
       body: { tables: tablesToSave, sessionId }
     })
+
+    console.log("Schema saved successfully")
     
     saveStatus.value = 'saved'
     setTimeout(() => { saveStatus.value = 'idle' }, 2000)
@@ -440,7 +443,7 @@ onMounted(() => {
         !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
       
       event.preventDefault()
-      getDeleteTableImpace(selectedTable.value)
+      getDeleteTableImpact(selectedTable.value)
     }
   }
   window.addEventListener('keydown', handleKeyDown)
@@ -480,7 +483,7 @@ useHead({
   title: `${currentDatabase.value?.name || 'Database'} - DataPantry`
 })
 
-const getDeleteTableImpace = async (tableId: string) => {
+const getDeleteTableImpact = async (tableId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     loadingDeleteImpact.value = true

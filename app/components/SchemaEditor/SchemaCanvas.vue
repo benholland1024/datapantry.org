@@ -61,7 +61,7 @@
         <g 
           :transform="`translate(${table.x}, ${table.y})`"
           @mousedown.stop="startDrag(table, $event)"
-          @click.stop="selectTable(table.id)"
+          @click.stop="selectTable(table.name)"
           class="cursor-move"
         >
           <!-- Table background -->
@@ -87,14 +87,14 @@
             rx="8"
             fill="none"
             stroke-width="2"
-            :class="{ 'stroke-blue-400': props.selectedTable === table.id }"
+            :class="{ 'stroke-blue-400': props.selectedTable === table.name }"
           />
 
           <!-- Table name -->
           <foreignObject x="8" y="8" width="184" height="24">
             <div 
               class="text-white font-semibold text-sm px-2 py-1"
-              @dblclick.stop="selectTable(table.id)"
+              @dblclick.stop="selectTable(table.name)"
             >
               {{ table.name }}
             </div>
@@ -303,8 +303,8 @@ const getConnectionPointColor = (point: any) => {
 }
 
 // Table selection
-const selectTable = (tableId: string) => {
-  emit('selectTable', tableId)
+const selectTable = (tableName: string) => {
+  emit('selectTable', tableName)
 }
 
 // Pan functionality

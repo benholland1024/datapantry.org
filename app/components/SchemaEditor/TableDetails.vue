@@ -288,7 +288,7 @@ const validationError = computed(() => {
       errors.tableName = 'Table name cannot be empty.'
       errors.err = true
     } else if (props.tables.some(t => t.name.trim() === selectedTableName.value.trim() 
-               && t.id !== props.selectedTable)) {
+               && t.name !== props.selectedTable)) {
       errors.tableName = 'Table name must be unique.'
       errors.err = true
     }
@@ -340,7 +340,7 @@ const datatypeOptions = computed(() => {
 // Selected table data
 const selectedTableData = computed(() => {
   if (!props.selectedTable) return null
-  return props.tables.find(table => table.id === props.selectedTable) || null
+  return props.tables.find(table => table.name === props.selectedTable) || null
 })
 watch(selectedTableData, (newVal) => {
   if (newVal) {

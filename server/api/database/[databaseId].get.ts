@@ -3,9 +3,11 @@
  * Returns the tables and columns for the specified database.
  */
 
-import { eq, inArray } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { db } from '../../postgresDB'
-import { userTables, userColumns, sessions, users } from '../../postgresDB/schema'
+import { sessions, users, userTablePositions } from '../../postgresDB/schema'
+import Database from 'better-sqlite3' 
+import path from 'path'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -35,39 +37,121 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get tables for this database
-    const tables = await db
-      .select()
-      .from(userTables)
-      .where(eq(userTables.databaseId, databaseId))
+    // Get tables from Postgres for this database
+    const postgresTables = await db
+      .select({
+        name: userTablePositions.name,
+        x: userTablePositions.x,
+        y: userTablePositions.y
+      })
+      .from(userTablePositions)
+      .where(and(
+        eq(userTablePositions.databaseId, databaseId),
+        eq(userTablePositions.databaseId, databaseId)
+      ))
 
-    // Get columns for all tables
-    const tableIds = tables.map(t => t.id)
-    const columns = tableIds.length > 0 
-      ? await db
-          .select()
-          .from(userColumns)
-          .where(inArray(userColumns.tableId, tableIds)) // ✅ Gets all tables
-      : []
+    // Get tables for database (the user's SQLite DB)
+    const tablesWithColumns: any[] = []
 
-    // Group columns by table
-    const tablesWithColumns = tables.map(table => ({
-      id: table.id,
-      name: table.name,
-      x: table.x,
-      y: table.y,
-      columns: columns
-        .filter(col => col.tableId === table.id)
-        .sort((a, b) => a.orderIndex - b.orderIndex)
-        .map(col => ({
-          id: col.id,
-          name: col.name,
-          datatype: col.datatype,
-          constraint: col.constraint || 'none',
-          isRequired: col.isRequired || false,
-          foreignKey: col.foreignKey || undefined 
-        }))
-    }))
+    const sqlitePath = path.resolve(
+      process.cwd(),
+      'server',
+      'userDBs',
+      String(sessionWithUser.userId),
+      `${databaseId}.sqlite`
+    )
+    try {
+      const sqliteDb = new Database(sqlitePath)
+      // Query all user tables (exclude SQLite system tables)
+      const tables = sqliteDb.prepare(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'
+      `).all() as { name: string }[]
+      for (const table of tables) {
+        // Get columns for this table
+        const columns = sqliteDb.prepare(`PRAGMA table_info(\'${table.name}\')`).all() as {
+          cid: number,
+          name: string,
+          type: string,
+          notnull: number,
+          dflt_value: any,
+          pk: number
+        }[]
+
+        // Get foreign keys for this table
+        const foreignKeys = sqliteDb.prepare(`PRAGMA foreign_key_list(\'${table.name}\')`).all() as {
+          id: number,
+          seq: number,
+          table: string,
+          from: string,
+          to: string,
+          on_update: string,
+          on_delete: string,
+          match: string
+        }[]
+
+        // Get unique indexes for this table
+        const indexes = sqliteDb.prepare(`PRAGMA index_list(\'${table.name}\')`).all() as {
+          seq: number,
+          name: string,
+          unique: number
+        }[]
+
+        // Find unique columns
+        const uniqueColumns = new Set<string>()
+        for (const idx of indexes.filter(i => i.unique)) {
+          const idxInfo = sqliteDb.prepare(`PRAGMA index_info(\'${idx.name}\')`).all() as { name: string }[]
+          for (const col of idxInfo) {
+            uniqueColumns.add(col.name)
+          }
+        }
+
+        //  Get constraint (should be 'primary', 'unique', or 'none')
+        const getColumnConstraint = (col: any) => {
+          if (col.pk) return 'primary'
+          if (uniqueColumns.has(col.name)) return 'unique'
+          return 'none'
+        }
+
+        // Format columns with constraints
+        const formattedColumns = columns.map(col => {
+          // Foreign key info for this column
+          const fk = foreignKeys.find(f => f.from === col.name)
+          return {
+            name: col.name,
+            datatype: col.type,
+            isRequired: !!col.notnull,
+            default: col.dflt_value,
+            constraint: getColumnConstraint(col),
+            foreignKey: fk
+              ? {
+                  table: fk.table,
+                  column: fk.to,
+                  onUpdate: fk.on_update,
+                  onDelete: fk.on_delete
+                }
+              : undefined
+          }
+        })
+
+        // Get position info from Postgres
+        const postgresTable = postgresTables.find(t => t.name === table.name)
+        const position = { x: 0, y: 0 }
+        if (postgresTable) {
+          position.x = postgresTable.x
+          position.y = postgresTable.y
+        }
+        tablesWithColumns.push({
+          name: table.name,
+          columns: formattedColumns,
+          x: position.x,
+          y: position.y
+        })
+      }
+      sqliteDb.close()
+    } catch (err) {
+      // Optionally handle missing/corrupt DB files
+      console.error(`Error reading tables from ${sqlitePath}:`, err)
+    }
 
     return { success: true, tables: tablesWithColumns }
     

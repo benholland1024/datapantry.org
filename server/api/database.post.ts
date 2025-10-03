@@ -7,7 +7,10 @@
 
 import { eq } from 'drizzle-orm'
 import { db } from '../postgresDB'
-import { databases, sessions, users } from '../postgresDB/schema'
+import { userDatabases, sessions, users } from '../postgresDB/schema'
+import Database from 'better-sqlite3' 
+import path from 'path'
+import fs from 'fs'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -41,17 +44,29 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Create the database
-    const [newDatabase] = await db.insert(databases).values({
+    // Create the database record in Postgres
+    const [newDatabase] = await db.insert(userDatabases).values({
       name,
       userId: sessionWithUser.userId,
       apiKey: crypto.randomUUID()
     }).returning({
-      id: databases.id,
-      name: databases.name,
-      apiKey: databases.apiKey,
-      createdAt: databases.createdAt,
+      id: userDatabases.id,
+      name: userDatabases.name,
+      apiKey: userDatabases.apiKey,
+      createdAt: userDatabases.createdAt,
     })
+
+    //  --- Create SQlite file --- //
+    const userId = sessionWithUser.userId
+    const databaseId = newDatabase.id
+
+    const userDir = path.resolve(process.cwd(), 'server', 'userDBs', String(userId))
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true })
+    }
+    const sqlitePath = path.join(userDir, `${databaseId}.sqlite`)
+    const sqliteDb = new Database(sqlitePath)
+    sqliteDb.close()
 
     return { 
       success: true, 

@@ -6,10 +6,12 @@
 
 import { eq, inArray } from 'drizzle-orm'
 import { db } from '../postgresDB'
-import { databases, sessions, users, userTables } from '../postgresDB/schema'
+import { userDatabases, userTablePositions, sessions, users } from '../postgresDB/schema'
+
 
 export default defineEventHandler(async (event) => {
   try {
+
     const query = getQuery(event)
     const { sessionId } = query
 
@@ -38,31 +40,30 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get user's databases with table counts
-    const userDatabases = await db
+    const currentUserDatabases = await db
       .select({
-        id: databases.id,
-        name: databases.name,
-        apiKey: databases.apiKey,
-        createdAt: databases.createdAt,
+        id: userDatabases.id,
+        name: userDatabases.name,
+        apiKey: userDatabases.apiKey,
+        createdAt: userDatabases.createdAt,
       })
-      .from(databases)
-      .where(eq(databases.userId, sessionWithUser.userId))
+      .from(userDatabases)
+      .where(eq(userDatabases.userId, sessionWithUser.userId))
 
     // Get all tables for these databases
-    const databaseIds = userDatabases.map(db => db.id)
+    const databaseIds = currentUserDatabases.map(db => db.id)
     const allTables = databaseIds.length > 0 
       ? await db
           .select({
-            id: userTables.id,
-            name: userTables.name,
-            databaseId: userTables.databaseId,
+            name: userTablePositions.name,
+            databaseId: userTablePositions.databaseId,
           })
-          .from(userTables)
-          .where(inArray(userTables.databaseId, databaseIds))
+          .from(userTablePositions)
+          .where(inArray(userTablePositions.databaseId, databaseIds))
       : []
 
     // Group tables by database
-    const databasesWithTables = userDatabases.map(database => ({
+    const databasesWithTables = currentUserDatabases.map(database => ({
       ...database,
       tables: allTables.filter(table => table.databaseId === database.id)
     }))
@@ -73,6 +74,7 @@ export default defineEventHandler(async (event) => {
     }
     
   } catch (error: any) {
+    console.error('Fetch databases error:', error)
     if (error.statusCode) throw error
     
     throw createError({
