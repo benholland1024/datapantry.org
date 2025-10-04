@@ -541,7 +541,7 @@ const updateColumnDatatype = (index: number, value: string) => {
         
         column.datatype = 'Foreign Key'
         column.foreignKey = {
-          tableId: referencedTable.id,
+          tableName: referencedTable.name,
           columnName: primaryKeyColumn?.name || 'id'
         }
         
@@ -564,9 +564,9 @@ const updateColumnDatatype = (index: number, value: string) => {
 const getColumnDatatypeDisplayValue = (column: any) => {
   
   if (column.datatype === 'Foreign Key' && column.foreignKey) {
-    
-    const referencedTable = props.tables.find(t => t.id === column.foreignKey.tableId)
-    
+
+    const referencedTable = props.tables.find(t => t.name === column.foreignKey.tableName)
+
     return referencedTable ? `FK - ${referencedTable.name}` : 'Foreign Key'
   }
   return column.datatype

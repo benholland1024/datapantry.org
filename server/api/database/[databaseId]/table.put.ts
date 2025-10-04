@@ -16,6 +16,7 @@ import {
 import Database from 'better-sqlite3'
 import path from 'path'
 import fs from 'fs'
+import { get } from 'http'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -103,7 +104,8 @@ export default defineEventHandler(async (event) => {
     // SQLite has limited ALTER TABLE support, so we'll rebuild the table
     // 1. Create new table with updated schema
     const tempTableName = `${tableName}_temp_${Date.now()}`
-    const createTableSQL = buildCreateTableSQL(tempTableName, columns)
+    console.log(" - -  Columns for new table:", columns)
+    const createTableSQL = buildCreateTableSQL(tempTableName, columns, sqliteDb)
     sqliteDb.prepare(createTableSQL).run()
 
     // 2. If preserving data, transform and insert it
@@ -157,7 +159,7 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function buildCreateTableSQL(tableName: string, columns: any[]): string {
+function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): string {
   const columnDefs = columns.map(col => {
     let def = `"${col.name}" `
 
@@ -169,7 +171,6 @@ function buildCreateTableSQL(tableName: string, columns: any[]): string {
         def += 'REAL'
         break
       case 'real':
-        console.log("Using REAL type for column:", col.name) // Debug log
         def += 'REAL'
         break
       case 'string':
@@ -179,8 +180,14 @@ function buildCreateTableSQL(tableName: string, columns: any[]): string {
         def += 'TEXT'
         break
       case 'foreign key':
+        console.log(" - - Foreign key detected, fetching referenced column type...")
         // FK type matches referenced column type
-        def += 'REAL' // Default, should ideally check referenced column
+        let type = getForeignKeyColumnType(
+          sqliteDb,
+          col.foreignKey?.tableName,
+          col.foreignKey?.columnName
+        )
+        def += type ? type : 'REAL' // Default, should ideally check referenced column
         break
       case 'boolean':
         def += 'INTEGER' // SQLite uses 0/1 for booleans
@@ -214,6 +221,22 @@ function buildCreateTableSQL(tableName: string, columns: any[]): string {
   
   const allDefs = [...columnDefs, ...foreignKeys].join(', ')
   return `CREATE TABLE "${tableName}" (${allDefs})`
+}
+
+//  Gets the datatype of the foreign key column from the referenced table
+function getForeignKeyColumnType(
+  sqliteDb: any, 
+  referencedTable: string, 
+  referencedColumn: string
+): string | null {
+  const pragma = sqliteDb
+    .prepare(`PRAGMA table_info("${referencedTable}")`)
+    .all()
+  
+  console.log("PRAGMA info for table", referencedTable, ":", pragma )
+  const columnInfo = pragma.find((col: any) => col.name === referencedColumn)
+  console.log("Foreign key column info:", columnInfo)
+  return columnInfo ? columnInfo.type : null
 }
 
 function transformRows(existingRows: any[], columnChanges: any[], newColumns: any[]): any[] {

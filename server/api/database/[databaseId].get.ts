@@ -116,6 +116,7 @@ export default defineEventHandler(async (event) => {
         const formattedColumns = columns.map(col => {
           // Foreign key info for this column
           const fk = foreignKeys.find(f => f.from === col.name)
+          if (fk) { col.type = 'Foreign Key' } // Override type for FK columns
           return {
             name: col.name,
             datatype: col.type,
@@ -124,8 +125,8 @@ export default defineEventHandler(async (event) => {
             constraint: getColumnConstraint(col),
             foreignKey: fk
               ? {
-                  table: fk.table,
-                  column: fk.to,
+                  tableName: fk.table,
+                  columnName: fk.to,
                   onUpdate: fk.on_update,
                   onDelete: fk.on_delete
                 }

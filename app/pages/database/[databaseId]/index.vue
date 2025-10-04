@@ -8,6 +8,7 @@
     <UModal 
       :open="openDeleteImpactModal" 
       :title="deleteImpact.rowCount ? 'Delete table? Rows will be lost!' : 'Delete table?'"
+      description="This action cannot be undone."
       :closeable="true"
       size="lg"
     >
@@ -252,6 +253,8 @@ const loadSchema = async () => {
     console.log('Loaded schema:', response)
     tables.value = response.tables
 
+    console.log("Tables after load:", tables.value)
+
     //  Add unique IDs to table columns, for editing
     tables.value.forEach(table => {
       table.columns.forEach((column: any) => {
@@ -493,16 +496,21 @@ useHead({
   title: `${currentDatabase.value?.name || 'Database'} - DataPantry`
 })
 
-const getDeleteTableImpact = async (tableId: string) => {
+const getDeleteTableImpact = async (tableName: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
     loadingDeleteImpact.value = true
     openDeleteImpactModal.value = true
-    selectedDeleteTableId.value = tableId
+    selectedDeleteTableId.value = tableName
     
-    const response = await $fetch(`/api/table/${tableId}/impact?sessionId=${sessionId}`, {
-      method: 'GET',
-    })
+    // const response = await $fetch(`/api/table/${tableId}/impact?sessionId=${sessionId}`, {
+    //   method: 'GET',
+    // })
+    const response = await $fetch(
+      `/api/database/${currentDatabase.value?.id}/table/impact`
+        + `?tableName=${tableName}&sessionId=${sessionId}`, 
+      { method: 'GET', }
+    )
 
     loadingDeleteImpact.value = false
     deleteImpact.value = response
