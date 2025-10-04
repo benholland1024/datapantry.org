@@ -22,7 +22,7 @@
           </div>
           <div v-else>
             <div>
-              Deleting <span class="font-bold">{{ tables.find(table => table.id === selectedDeleteTableId)?.name || 'this table' }}</span> will delete {{ deleteImpact.rowCount }} rows.
+              Deleting <span class="font-bold">{{ tables.find(table => table.name === selectedDeleteTableName)?.name || 'this table' }}</span> will delete {{ deleteImpact.rowCount }} rows.
             </div>
             <div class="flex gap-4 mt-4">
               <UButton @click="deleteTable()" color="error">Confirm Delete</UButton>
@@ -237,7 +237,7 @@ const apiKeyCopied = ref(false)
 const openDeleteImpactModal = ref(false)
 const loadingDeleteImpact = ref(false)
 const deleteImpact = ref<any>({})
-const selectedDeleteTableId = ref<string | null>(null)
+const selectedDeleteTableName = ref<string | null>(null)
 
 // Save changes impact modal
 const openSaveChangesModal = ref(false)
@@ -501,11 +501,8 @@ const getDeleteTableImpact = async (tableName: string) => {
     const sessionId = localStorage.getItem('sessionId')
     loadingDeleteImpact.value = true
     openDeleteImpactModal.value = true
-    selectedDeleteTableId.value = tableName
-    
-    // const response = await $fetch(`/api/table/${tableId}/impact?sessionId=${sessionId}`, {
-    //   method: 'GET',
-    // })
+    selectedDeleteTableName.value = tableName
+
     const response = await $fetch(
       `/api/database/${currentDatabase.value?.id}/table/impact`
         + `?tableName=${tableName}&sessionId=${sessionId}`, 
@@ -523,14 +520,14 @@ const getDeleteTableImpact = async (tableName: string) => {
 // Delete a table
 const deleteTable = async () => {
   openDeleteImpactModal.value = false
-  const tableId = selectedDeleteTableId.value
-  const index = tables.value.findIndex(table => table.id === tableId)
-  if (index !== -1 && tableId) {
+  const tableName = selectedDeleteTableName.value
+  const index = tables.value.findIndex(table => table.name === tableName)
+  if (index !== -1 && tableName) {
     tables.value.splice(index, 1)
     selectedTable.value = null
     
     // Remove from sidebar
-    removeTableFromDatabase(databaseId, tableId)
+    removeTableFromDatabase(databaseId, tableName)
   }
 }
 

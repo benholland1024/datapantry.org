@@ -5,7 +5,7 @@
  * For destructive changes, use:
  *  -  GET /api/table/:tableId/impact to get # rows affected, col differences, etc
  *  -  PUT /api/table/:tableId for column changes
- *  -  DELETE /api/table/:tableId for table deletion
+ *  -  This file _can_ delete tables that were removed in the frontend. 
  */
 
 import { eq, and } from 'drizzle-orm'
@@ -24,6 +24,8 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = parseInt(getRouterParam(event, 'databaseId') as string)
     const { tables, sessionId } = await readBody(event)
+
+    console.log(" > Recieved tables to save:", tables)
 
     if (!sessionId || !databaseId || !tables) {
       throw createError({
@@ -84,6 +86,27 @@ export default defineEventHandler(async (event) => {
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`)
       .all()
     const existingTableNames = existingTablesResult.map((t: any) => t.name)
+
+    // Find tables to delete (exist in SQLite but not in frontend)
+    const frontendTableNames = tables.map((table: any) => table.name)
+    const tablesToDelete = existingTableNames.filter(name => !frontendTableNames.includes(name))
+
+    // Delete tables that are no longer in the frontend
+    for (const tableName of tablesToDelete) {
+      console.log('Deleting table:', tableName)
+      
+      // Drop table from SQLite
+      const dropTableSQL = `DROP TABLE \`${tableName}\``
+      sqliteDb.prepare(dropTableSQL).run()
+
+      // Remove position data from Postgres
+      await db
+        .delete(userTablePositions)
+        .where(and(
+          eq(userTablePositions.databaseId, databaseId),
+          eq(userTablePositions.name, tableName)
+        ))
+    }
 
     // Process each table
     for (const table of tables) {

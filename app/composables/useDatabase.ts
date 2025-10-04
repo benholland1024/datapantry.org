@@ -141,10 +141,10 @@ export function useDatabase() {
   }
 
   // Remove table from sidebar
-  const removeTableFromDatabase = (databaseId: number, tableId: string) => {
+  const removeTableFromDatabase = (databaseId: number, tableName: string) => {
     const database = userDatabases.value.find(db => db.id === databaseId)
     if (database) {
-      const tableIndex = database.tables.findIndex(t => t.id === tableId)
+      const tableIndex = database.tables.findIndex(t => t.name === tableName)
       if (tableIndex !== -1) {
         database.tables.splice(tableIndex, 1)
       }
