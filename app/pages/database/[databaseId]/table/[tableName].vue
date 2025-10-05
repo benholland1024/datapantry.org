@@ -300,6 +300,7 @@ const loadTableData = async () => {
     tableRows.value = response.rows || []
 
     console.log("Columns:", currentTable.value.columns)
+    console.log("Rows:", tableRows.value)
 
     // Load all tables for FK dropdowns TODO
     for (const col of currentTable.value.columns) {
@@ -373,10 +374,11 @@ const saveRow = async () => {
       // Create new row
       const rowData = { ...rowEditDraft.value }
 
-      const response = await $fetch(`/api/database/${databaseId}/row?tableName=${currentTable.value.name}&sessionId=${sessionId}`, {
+      const response = await $fetch(`/api/database/${databaseId}/row`, {
         method: 'POST',
         body: {
           row: rowData,
+          tableName: currentTable.value.name,
           sessionId
         }
       }) as { row: any }
@@ -389,14 +391,25 @@ const saveRow = async () => {
     } else {
       // Update existing row
       const rowData = { ...rowEditDraft.value }
+      const pkColumn = currentTable.value.columns.find((c: any) => c.constraint === 'primary')?.name
+      if (!pkColumn) {
+        throw new Error('Primary key column not found')
+      }
+      const oldRow = tableRows.value.find(r => r.data[pkColumn] === rowEditDraft.value.data[pkColumn])
+      const oldRowPK = oldRow ? oldRow.data[pkColumn] : null
+      if (!oldRowPK) {
+        throw new Error('Original row primary key not found')
+      }
 
       const response = await $fetch(
-        `/api/database/${databaseId}/row?tableName=${currentTable.value.name}&`
-        + `rowId=${rowEditDraft.value.id}`, {
+        `/api/database/${databaseId}/row`, {
         method: 'PUT',
         body: {
           row: rowData,
-          sessionId
+          tableName: currentTable.value.name,
+          sessionId,
+          oldRowPK,
+          pkColumn
         }
       })
             

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
-import { db } from '../../postgresDB'
-import { userDatabases, sessions, users } from '../../postgresDB/schema'
+import { db } from '../../../postgresDB'
+import { userDatabases, sessions, users } from '../../../postgresDB/schema'
 import path from 'path'
 import Database from 'better-sqlite3'
 
@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const { row, sessionId, tableName } = await readBody(event)
+    console.log('Create row body:', { databaseId, row, sessionId, tableName })
 
     if (!sessionId || !databaseId || !row || !tableName) {
       throw createError({
@@ -53,9 +54,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create new row
-    const newRowId = uuidv4()
-    const newRow = sqliteDb.prepare(`INSERT INTO '${table.name}' (id, data) VALUES (?, ?)`)
-      .run(newRowId, JSON.stringify(row))
+    let columns = Object.keys(row.data).map(col => `'${col}'`).join(', ') 
+    let placeholders = Object.keys(row.data).map(() => '?').join(', ')
+    let values = Object.values(row.data)
+    const newRow = sqliteDb.prepare(`INSERT INTO '${table.name}' (${columns}) VALUES (${placeholders})`)
+      .run(...values)
 
     if (newRow.changes === 0) {
       throw createError({
@@ -67,7 +70,6 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       row: {
-        id: newRowId,
         data: row
       }
     }

@@ -249,8 +249,7 @@ const loadSchema = async () => {
   isLoading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`)
-    console.log('Loaded schema:', response)
+    const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`) as { tables: any[] }
     tables.value = response.tables
 
     console.log("Tables after load:", tables.value)

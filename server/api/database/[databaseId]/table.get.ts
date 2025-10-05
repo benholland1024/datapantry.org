@@ -9,6 +9,7 @@ import { db } from '../../../postgresDB'
 import { userDatabases, sessions, users } from '../../../postgresDB/schema'
 import path from 'path'
 import Database from 'better-sqlite3' 
+import { v4 as uuidv4, v6 as uuidv6 } from 'uuid';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -141,17 +142,10 @@ export default defineEventHandler(async (event) => {
       }))
     }
 
-    const formattedRows = tableRows.map(row => {      
-      return {
-        id: row.id,      // Use the real UUID from the database
-        data: row.data || {}  // The rest of the row data
-      }
-    })
-
     return { 
       success: true, 
       table: tableWithData,
-      rows: formattedRows
+      rows: tableRows.map(r => ({ id: uuidv4(), data: r } ))
     }
     
   } catch (error: any) {
