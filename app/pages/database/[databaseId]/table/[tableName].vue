@@ -445,9 +445,23 @@ const cancelEdit = () => {
 const deleteRow = async (rowId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
+    const pkColumn = currentTable.value.columns.find((c: any) => c.constraint === 'primary')?.name
+    if (!pkColumn) {
+      throw new Error('Primary key column not found')
+    }
+    const rowToDelete = tableRows.value.find(r => r.id === rowId)
+    const rowPK = rowToDelete ? rowToDelete.data[pkColumn] : null
+    if (!rowPK) {
+      throw new Error('Row primary key not found')
+    }
     await $fetch(`/api/database/${databaseId}/row?tableName=${currentTable.value.name}&rowId=${rowId}`, {
       method: 'DELETE',
-      body: { sessionId }
+      body: { 
+        sessionId,
+        tableName: currentTable.value.name,
+        rowPK,
+        pkColumn
+      }
     })
     
     // Remove from local state

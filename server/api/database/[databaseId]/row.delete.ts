@@ -18,12 +18,12 @@ import path from 'path'
 export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
-    const { sessionId, rowId, tableName } = await readBody(event)
+    const { sessionId, rowPK, pkColumn, tableName } = await readBody(event)
 
-    if (!sessionId || !databaseId || !rowId || !tableName) {
+    if (!sessionId || !databaseId || !rowPK || !pkColumn || !tableName) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Session ID, database ID, table name, and row ID required'
+        statusMessage: 'Session ID, database ID, table name, row PK, and PK column required'
       })
     }
 
@@ -51,8 +51,8 @@ export default defineEventHandler(async (event) => {
       `${databaseId}.sqlite`
     )
     const sqliteDb = new Database(sqlitePath)
-    const deleteStmt = sqliteDb.prepare(`DELETE FROM '${tableName}' WHERE id = ?`)
-    const result = deleteStmt.run(rowId)
+    const deleteStmt = sqliteDb.prepare(`DELETE FROM '${tableName}' WHERE ${pkColumn} = ?`)
+    const result = deleteStmt.run(rowPK)
 
     if (result.changes === 0) {
       throw createError({
