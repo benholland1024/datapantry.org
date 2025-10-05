@@ -245,7 +245,7 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
         children: database.tables.map(table => ({
           label: table.name,
           icon: 'i-lucide-table',
-          to: `/database/${database.id}/table/${table.id}`
+          to: `/database/${database.id}/table/${encodeURIComponent(table.name)}`
         }))
       })),
       {

@@ -166,7 +166,7 @@ const route = useRoute()
 
 // Get IDs from route
 const databaseId = parseInt(route.params.databaseId as string)
-const tableId = route.params.tableId as string
+const tableName = decodeURIComponent(route.params.tableName as string)
 
 // State
 const loading = ref(true)             //  Is the page loading?
@@ -292,7 +292,9 @@ const loadTableData = async () => {
   loading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch(`/api/table/${tableId}?sessionId=${sessionId}`)
+    const response = await $fetch(
+      `/api/database/${databaseId}/table?tableName=${tableName}&sessionId=${sessionId}`
+    ) as { table: any, rows: any[] }
     
     currentTable.value = response.table
     tableRows.value = response.rows || []
@@ -302,7 +304,9 @@ const loadTableData = async () => {
     // Load all tables for FK dropdowns TODO
     for (const col of currentTable.value.columns) {
       if (col.datatype === 'Foreign Key' && col.foreignKey) {
-        const fkResponse = await $fetch(`/api/table/${col.foreignKey.tableId}?sessionId=${sessionId}`)
+        const fkResponse = await $fetch(
+          `/api/database/${databaseId}/table?tableName=${col.foreignKey.tableId}&sessionId=${sessionId}`
+        ) as { table: any, rows: any[] }
         FKTables.value.push({
           tableId: col.foreignKey.tableId,
           tableName: fkResponse.table.name,
@@ -369,13 +373,13 @@ const saveRow = async () => {
       // Create new row
       const rowData = { ...rowEditDraft.value }
 
-      const response = await $fetch(`/api/table/${tableId}/row`, {  // No trailing slash
+      const response = await $fetch(`/api/database/${databaseId}/row?tableName=${currentTable.value.name}&sessionId=${sessionId}`, {
         method: 'POST',
         body: {
           row: rowData,
           sessionId
         }
-      })
+      }) as { row: any }
       
       // Replace temporary row with saved row
       const tempIndex = tableRows.value.findIndex(r => r.id === 'new')
@@ -386,7 +390,9 @@ const saveRow = async () => {
       // Update existing row
       const rowData = { ...rowEditDraft.value }
 
-      const response = await $fetch(`/api/table/${tableId}/row/${rowEditDraft.value.id}`, {
+      const response = await $fetch(
+        `/api/database/${databaseId}/row?tableName=${currentTable.value.name}&`
+        + `rowId=${rowEditDraft.value.id}`, {
         method: 'PUT',
         body: {
           row: rowData,
@@ -426,7 +432,7 @@ const cancelEdit = () => {
 const deleteRow = async (rowId: string) => {
   try {
     const sessionId = localStorage.getItem('sessionId')
-    await $fetch(`/api/table/${tableId}/row/${rowId}`, {
+    await $fetch(`/api/database/${databaseId}/row?tableName=${currentTable.value.name}&rowId=${rowId}`, {
       method: 'DELETE',
       body: { sessionId }
     })
@@ -455,8 +461,8 @@ const deleteSelected = async () => {
     console.log("Row IDs to delete:", rowIds  )
     
     if (rowIds.length === 0) return
-    
-    await $fetch(`/api/table/${tableId}/rows`, {
+
+    await $fetch(`/api/database/${databaseId}/rows?tableName=${currentTable.value.name}`, {
       method: 'DELETE',
       body: { sessionId, rowIds }
     })
