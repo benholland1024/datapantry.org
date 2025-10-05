@@ -262,7 +262,7 @@ const editValidation = computed(() => {
   for (const col of dataColumns.value) {
     if (col.isRequired && !rowEditDraft.value.data[col.key]) {
       validation.valid = false
-      validation.msg = `Field ${col.label} is required`
+      validation.msg = `Field "${col.label}" is required`
       break
     } else if (col.constraint === 'primary' || col.constraint === 'unique') {
       //  Empty values are allowed for non-required unique fields
@@ -275,7 +275,7 @@ const editValidation = computed(() => {
       )
       if (duplicate) {
         validation.valid = false
-        validation.msg = `Field ${col.label} must be unique`
+        validation.msg = `Field "${col.label}" must be unique`
         break
       }
     }
@@ -480,22 +480,33 @@ const deleteSelected = async () => {
   // TODO: Implement bulk delete
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const rowIndexes = Object.keys(selectedRows.value)
-    let rowIds = [];
-    for (const index of rowIndexes) {
-      rowIds.push(tableRows.value[parseInt(index)].id)
+
+    const pkColumn = currentTable.value.columns.find((c: any) => c.constraint === 'primary')?.name
+    if (!pkColumn) {
+      throw new Error('Primary key column not found')
     }
-    console.log("Row IDs to delete:", rowIds  )
-    
-    if (rowIds.length === 0) return
+
+    const rowIndexes = Object.keys(selectedRows.value)
+    let rowPKs = [];
+    for (const index of rowIndexes) {
+      rowPKs.push(tableRows.value[parseInt(index)].data[pkColumn])
+    }
+    console.log("Row primary keys to delete:", rowPKs)
+
+    if (rowPKs.length === 0) return
 
     await $fetch(`/api/database/${databaseId}/rows?tableName=${currentTable.value.name}`, {
       method: 'DELETE',
-      body: { sessionId, rowIds }
+      body: { 
+        sessionId, 
+        tableName: currentTable.value.name,
+        pkColumn,
+        rowPKs 
+      }
     })
     
     // Remove from local state
-    tableRows.value = tableRows.value.filter(r => !rowIds.includes(r.id))
+    tableRows.value = tableRows.value.filter(r => !rowPKs.includes(r.data[pkColumn]))
     selectedRows.value = {}
   } catch (error) {
     console.error('Failed to delete selected rows:', error)

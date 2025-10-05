@@ -1,65 +1,93 @@
-// /**
-//  * Delete multiple rows from a table.
-//  *
-//  * DELETE /api/table/:tableId/rows
-//  *
-//  * Parameters:
-//  * - sessionId: string (required)
-//  * - tableId: string (from URL, required)
-//  * - rowIds: string[] (from URL, required)
-//  */
+/**
+ * Delete multiple rows from a table.
+ *
+ * DELETE /api/database/:databaseId/rows
+ *
+ * Parameters:
+ * - sessionId: string (required)
+ * - databaseId: string (from URL, required)
+ * - rowPKs: string[] (from URL, required)
+ * - pkColumn: string (from body, required)
+ * - tableName: string (from body, required)
+ */
 
-// import { eq, and } from 'drizzle-orm'
-// import { db } from '../../../postgresDB'
-// import { rows, sessions, users } from '../../../postgresDB/schema'
+import { eq, and } from 'drizzle-orm'
+import { db } from '../../../postgresDB'
+import { sessions, users } from '../../../postgresDB/schema'
+import Database from 'better-sqlite3'
+import path from 'path'
 
-// export default defineEventHandler(async (event) => {
-//   try {
-//     const tableId = getRouterParam(event, 'tableId') as string
-//     const { sessionId, rowIds } = await readBody(event)
+export default defineEventHandler(async (event) => {
+  try {
+    const databaseId = getRouterParam(event, 'databaseId') as string
+    const { 
+      sessionId, 
+      rowPKs,
+      pkColumn,
+      tableName
+     } = await readBody(event)
 
-//     if (!sessionId || !tableId || !rowIds || !Array.isArray(rowIds) || rowIds.length === 0) {
-//       throw createError({
-//         statusCode: 400,
-//         statusMessage: 'Session ID, table ID, and row IDs required'
-//       })
-//     }
+    if (!sessionId ||
+        !databaseId ||
+        !rowPKs || 
+        !Array.isArray(rowPKs) || rowPKs.length === 0 || 
+        !pkColumn || 
+        !tableName 
+      ) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Session ID, database ID, table name, primary key column, and row PKs required'
+      })
+    }
 
-//     // Validate session
-//     const [sessionWithUser] = await db
-//       .select({ userId: sessions.userId })
-//       .from(sessions)
-//       .innerJoin(users, eq(sessions.userId, users.id))
-//       .where(eq(sessions.id, sessionId))
-//       .limit(1)
+    // Validate session
+    const [sessionWithUser] = await db
+      .select({ userId: sessions.userId })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(eq(sessions.id, sessionId))
+      .limit(1)
 
-//     if (!sessionWithUser) {
-//       throw createError({
-//         statusCode: 401,
-//         statusMessage: 'Invalid session'
-//       })
-//     }
+    if (!sessionWithUser) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Invalid session'
+      })
+    }
 
-//     // Delete each row
-//     for (const rowId of rowIds) {
-//       await db
-//         .delete(rows)
-//         .where(and(
-//           eq(rows.id, rowId),
-//           eq(rows.tableId, tableId)
-//         ))
-//     }
+    // Get SQLite DB 
+    const sqlitePath = path.resolve(
+      process.cwd(),
+      'server',
+      'userDBs',
+      String(sessionWithUser.userId),
+      `${databaseId}.sqlite`
+    )
+    const sqliteDb = new Database(sqlitePath)
 
-//     return { success: true }
+    // Delete each row
+    for (const rowPK of rowPKs) {
+      const deleteStmt = sqliteDb.prepare(`DELETE FROM '${tableName}' WHERE ${pkColumn} = ?`)
+      const result = deleteStmt.run(rowPK)
 
-//   } catch (error: any) {
-//     console.error('Delete rows error:', error)
+      if (result.changes === 0) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Row not found'
+        })
+      }
+    }
 
-//     if (error.statusCode) throw error
+    return { success: true }
 
-//     throw createError({
-//       statusCode: 500,
-//       statusMessage: 'Failed to delete rows'
-//     })
-//   }
-// })
+  } catch (error: any) {
+    console.error('Delete rows error:', error)
+
+    if (error.statusCode) throw error
+
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to delete rows'
+    })
+  }
+})
