@@ -1,22 +1,57 @@
 <template>
-  <div class="p-8 max-w-4xl mx-auto my-8">
-    <h1 class="text-2xl font-bold mb-4">API Documentation</h1>
-    <p class="mb-4">Welcome to the API documentation for DataPantry. Here you will find information on how to use the API.</p>
+  <div class="pl-16 pr-8 pb-50 pt-25 max-w-4xl mx-auto [&>a]:text-blue-500 [&>a]:hover:underline
+    h-[calc(100vh-64px)] overflow-y-scroll
+    [&>p]:mb-4 [&>p]:relative
+    [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4
+    [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-2 [&>h2]:mt-50 [&>h2]:relative
+    [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>h3]:mt-8 [&>h3]:relative" 
+    data-scroll-container
+  >
+    <LinkableHeader tagName="h1" linkName="api-guide">&#128225; API Guide</LinkableHeader>
+    <p>
+      You may want to use your database in an actual website. If so, you're in the right place!
+    </p>
 
-    <h2 class="text-xl font-bold mb-2">Getting Started</h2>
-    <p class="mb-4">To get started with the API, you will need an API key. You can obtain one by signing up for an account.</p>
+    <p>
+      <span class="absolute -left-8 block">&#128273;</span>
+      The first step is to get the API key from your database. You
+      can copy it from your <NuxtLink to="/dashboard">dashboard</NuxtLink>
+      or from the schema diagram editor.
+    </p>
 
-    <h2 class="text-xl font-bold mb-2">Endpoints</h2>
-    <ul class="list-disc list-inside mb-4">
-      <li><strong>GET /api/databases</strong> - Retrieve a list of databases</li>
-      <li><strong>POST /api/databases</strong> - Create a new database</li>
-      <li><strong>DELETE /api/databases/:id</strong> - Delete a database</li>
-    </ul>
+    <p>
+      <span class="absolute -left-8 block">&#x1F6DC;</span>
+      Then, choose how you want to make API requests.
+      If you're not sure how API requests work, check out the 
+      <a href="#api-basics" class="text-blue-500 hover:underline">API Basics</a> section below.
+    </p>
 
-    <h2 class="text-xl font-bold mb-2">Authentication</h2>
-    <p class="mb-4">All API requests require authentication. You can authenticate by including your API key in the request headers.</p>
+    <p>
+      <span class="absolute -left-8 block">&#x1F4E6; </span>
+      If you're building a JS project, I recommend our 
+      <a href="https://www.npmjs.com/package/datapantry" 
+        target="_blank" 
+        class="text-blue-500 hover:underline"
+      >
+        Datapantry NPM package
+      </a>,
+      which wraps the API and makes it easy to use.
+    </p>
 
-    <h2 class="text-xl font-bold mb-2">Error Handling</h2>
-    <p class="mb-4">If an error occurs, the API will return a JSON response with an error message.</p>
+    <h2>&#x1F96B; How to Use the Datapantry NPM Package</h2>
+    <p>The NPM package is perfect if you're using NodeJS for your server.</p>
+
+    <h3>1. Install the package</h3>
+    <p>To get started, run this:</p>
+    <CodeRender :code="`npm install datapantry`" language="bash" class="mb-4"/>
+
+    <p>Here's an example of how it might be used in a Node.js application:</p>
   </div>
 </template>
+
+<script setup lang="ts">
+
+import CodeRender from '~/components/atoms/CodeRender.vue';
+import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
+
+</script>
