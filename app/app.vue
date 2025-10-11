@@ -264,11 +264,44 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
         ui: { linkLabel: 'cursor-pointer' },
         open: true,
         defaultOpen: true,
-        to: '/api-docs'
+        to: '/api-docs',
+        children: [
+          {
+            label: 'Quick Start',
+            icon: 'i-lucide-rocket',
+            to: '/api-docs/quick-start'
+          },
+          {
+            label: 'API Basics',
+            icon: 'icon-park-outline:baby',
+            to: '/api-docs/api-basics'
+          },
+          {
+            label: 'The NPM Package',
+            icon: 'i-lucide-package',
+            to: '/api-docs/npm-package'
+          },
+          {
+            label: 'Raw API (HTTP)',
+            icon: 'tabler:plug',
+            to: '/api-docs/raw-api'
+          },
+          {
+            label: 'Security',
+            icon: 'i-lucide-shield-check',
+            to: '/api-docs/security'
+          },
+          
+        ]
       },
       {
         label: 'Examples',
-        icon: 'i-lucide-circle-help',
+        icon: 'streamline:angle-brackets-remix',
+        disabled: true
+      },
+      {
+        label: 'About Us',
+        icon: 'fluent-emoji-high-contrast:canned-food',
         disabled: true
       }
     ]
