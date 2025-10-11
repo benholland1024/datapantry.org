@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
 
     const query = getQuery(event)
     const { sessionId, tableName } = query
-    console.log("Table name: ", tableName, " New name: ", newTableName)
 
     if (!sessionId || !tableName || !databaseId || !columns) {
       throw createError({
@@ -104,7 +103,6 @@ export default defineEventHandler(async (event) => {
     // SQLite has limited ALTER TABLE support, so we'll rebuild the table
     // 1. Create new table with updated schema
     const tempTableName = `${tableName}_temp_${Date.now()}`
-    console.log(" - -  Columns for new table:", columns)
     const createTableSQL = buildCreateTableSQL(tempTableName, columns, sqliteDb)
     sqliteDb.prepare(createTableSQL).run()
 
@@ -163,8 +161,6 @@ function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): 
   const columnDefs = columns.map(col => {
     let def = `"${col.name}" `
 
-    console.log("Defining column:", col.name, "Type:", col.datatype, "Constraint:", col.constraint, "IsRequired:", col.isRequired)
-    
     // Map datatype to SQLite type
     switch(col.datatype.toLowerCase()) {
       case 'number':
@@ -180,7 +176,6 @@ function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): 
         def += 'TEXT'
         break
       case 'foreign key':
-        console.log(" - - Foreign key detected, fetching referenced column type...")
         // FK type matches referenced column type
         let type = getForeignKeyColumnType(
           sqliteDb,

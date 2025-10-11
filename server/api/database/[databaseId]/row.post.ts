@@ -9,7 +9,6 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const { row, sessionId, tableName } = await readBody(event)
-    console.log('Create row body:', { databaseId, row, sessionId, tableName })
 
     if (!sessionId || !databaseId || !row || !tableName) {
       throw createError({

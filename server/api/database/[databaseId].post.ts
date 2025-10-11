@@ -25,8 +25,6 @@ export default defineEventHandler(async (event) => {
     const databaseId = parseInt(getRouterParam(event, 'databaseId') as string)
     const { tables, sessionId } = await readBody(event)
 
-    console.log(" > Recieved tables to save:", tables)
-
     if (!sessionId || !databaseId || !tables) {
       throw createError({
         statusCode: 400,
@@ -93,7 +91,6 @@ export default defineEventHandler(async (event) => {
 
     // Delete tables that are no longer in the frontend
     for (const tableName of tablesToDelete) {
-      console.log('Deleting table:', tableName)
       
       // Drop table from SQLite
       const dropTableSQL = `DROP TABLE \`${tableName}\``
