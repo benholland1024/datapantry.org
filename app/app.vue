@@ -120,7 +120,7 @@
 
       <!-- Main content area -->
       <div class="flex">
-        <UNavigationMenu orientation="vertical" :items="sidebarMenu" 
+        <UNavigationMenu orientation="vertical" :items="sidebarMenu" :key="openDBId?.toString()"
           v-if="!['/', '/sign-up', '/sign-in'].includes(route.path) && databasesLoaded"
           class="data-[orientation=vertical]:w-48 bg-theme-bg-darker-2
             h-full min-h-[calc(100vh-4rem)]" 
@@ -140,6 +140,7 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 import { useRoute } from 'vue-router';
 import { useDatabase } from '@/composables/useDatabase'
+import { r } from 'happy-dom/lib/PropertySymbol.js';
 
 const { 
   currentUser, 
@@ -227,6 +228,11 @@ const userMenu = ref<DropdownMenuItem[]>([
   }
 ])
 
+const openDBId = ref<string | null>(route.value.params.databaseId as string || null)
+watch(() => route.value.params.databaseId, (newDBId) => {
+  openDBId.value = newDBId as string || null
+})
+
 // Make sidebarMenu computed
 const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
   return [
@@ -240,8 +246,8 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
         label: database.name,
         icon: 'i-lucide-database',
         to: `/database/${database.id}`,
-        defaultOpen: true,
-        open: true,
+        // defaultOpen: true,
+        open: Number(openDBId.value) === database.id,
         children: database.tables.map(table => ({
           label: table.name,
           icon: 'i-lucide-table',
@@ -262,8 +268,7 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
         label: 'API Guide',
         icon: 'uil:brackets-curly',
         ui: { linkLabel: 'cursor-pointer' },
-        open: true,
-        defaultOpen: true,
+        open: route.value.path.startsWith('/api-docs'),
         to: '/api-docs',
         children: [
           {

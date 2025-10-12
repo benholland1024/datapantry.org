@@ -306,7 +306,7 @@ const loadTableData = async () => {
     for (const col of currentTable.value.columns) {
       if (col.datatype === 'Foreign Key' && col.foreignKey) {
         const fkResponse = await $fetch(
-          `/api/database/${databaseId}/table?tableName=${col.foreignKey.tableId}&sessionId=${sessionId}`
+          `/api/database/${databaseId}/table?tableName=${col.foreignKey.tableName}&sessionId=${sessionId}`
         ) as { table: any, rows: any[] }
         FKTables.value.push({
           tableId: col.foreignKey.tableId,
@@ -477,7 +477,6 @@ const deleteRow = async (rowId: string) => {
 //  Delete the selected rows
 const deleteSelected = async () => {
   console.log("Deleting selected rows:", selectedRows.value )
-  // TODO: Implement bulk delete
   try {
     const sessionId = localStorage.getItem('sessionId')
 
