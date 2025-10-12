@@ -212,7 +212,7 @@ const getConnectionPoints = () => {
 
   props.tables.forEach(table => {
     table.columns.forEach((column: any, columnIndex: number) => {
-      const columnY = table.y + 48 + (columnIndex * 24) + 8 // Center of column row
+      const columnY = table.y + 48 + (columnIndex * 21) + 8 // Center of column row
       
       // Primary key connection point (left side)
       if (column.constraint === 'primary') {
