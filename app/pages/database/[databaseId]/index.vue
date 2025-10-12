@@ -78,7 +78,7 @@
 
           <!-- Database name input -->
           <UTooltip :open="!isDBNameValid.valid" 
-            :text="isDBNameValid.message" placement="bottom"
+            :text="isDBNameValid.message" :content="{ side: 'bottom' }"
             :ui="{ content: 'text-error border border-error', arrow: 'fill-error' }" 
             arrow
           >

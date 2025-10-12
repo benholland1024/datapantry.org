@@ -50,11 +50,23 @@
         >
           Sign in!
         </UButton>
-        <UButton variant="ghost" class="text-white" tabindex="5">
+        <UButton variant="ghost" class="text-white cursor-pointer" tabindex="5" 
+          to="/forgot-password"
+        >
           Forgot Password
         </UButton>
 
       </div>
+
+      <!--  No account? Sign up!  -->
+      <UButton
+        variant="link"
+        class="text-white/40 cursor-pointer text-left px-0"
+        to="/sign-up"
+        tabindex="6"
+      >
+        No account? Sign up!
+      </UButton>
 
       <p v-if="errorMessage" class="text-error text-sm">{{ errorMessage }}</p>
 

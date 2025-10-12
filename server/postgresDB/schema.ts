@@ -48,30 +48,24 @@ export const userTablePositions = pgTable('user_table_positions', {
   primaryKey({ columns: [table.databaseId, table.name] }),
 ])
 
-// export const userColumns = pgTable('user_columns', {
-//   id: varchar('id', { length: 36 }).primaryKey(), // UUID
-//   tableId: varchar('table_id', { length: 36 }).notNull().references(() => userTables.id),
-//   name: varchar('name', { length: 255 }).notNull(),
-//   datatype: varchar('datatype', { length: 100 }).notNull(),
-//   constraint: varchar('constraint', { length: 100 }).default('none'),
-//   isRequired: boolean('is_required').default(false),
-//   orderIndex: integer('order_index').notNull(),
-//   foreignKey: jsonb('foreign_key').$type<{tableId: number, columnName: string}>(),
-//   createdAt: timestamp('created_at').defaultNow(),
-// })
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  token: varchar('token', { length: 255 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+})
 
-// User-created rows within tables
-// export const rows = pgTable('rows', {
-//   id: varchar('id', { length: 36 }).primaryKey(),
-//   tableId: varchar('table_id', { length: 36 }).notNull().references(() => userTables.id),
-//   data: jsonb('data').$type<Record<string, any>>(),
-//   createdAt: timestamp('created_at').defaultNow(),
-//   updatedAt: timestamp('updated_at').defaultNow(), 
-// })
+export const passwordResetRequestIPs = pgTable('password_reset_request_ips', {
+  id: serial('id').primaryKey(),
+  ipAddress: varchar('ip_address', { length: 45 }).notNull(), // Supports IPv6
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
 
 export type User = typeof users.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type UserDatabase = typeof userDatabases.$inferSelect
 export type UserTablePosition = typeof userTablePositions.$inferSelect
-// export type UserColumn = typeof userColumns.$inferSelect
-// export type Row = typeof rows.$inferSelect
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
+export type PasswordResetRequestIP = typeof passwordResetRequestIPs.$inferSelect

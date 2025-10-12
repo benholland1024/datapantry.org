@@ -38,4 +38,4 @@ while ! docker exec datapantry-postgres pg_isready -U ${DB_USER:-postgres} -d ${
 done
 
 echo "✅ PostgreSQL container started successfully!"
-echo "📝 Run 'pnpm db:generate && pnpm db:migrate' to set up your schema"
+echo "📝 Run 'npm db:generate && npm db:migrate' to set up your schema"

@@ -121,11 +121,11 @@
       <!-- Main content area -->
       <div class="flex">
         <UNavigationMenu orientation="vertical" :items="sidebarMenu" :key="openDBId?.toString()"
-          v-if="!['/', '/sign-up', '/sign-in'].includes(route.path) && databasesLoaded"
+          v-if="routeShowsSidebar && databasesLoaded"
           class="data-[orientation=vertical]:w-48 bg-theme-bg-darker-2
             h-full min-h-[calc(100vh-4rem)]" 
         />
-        <div v-else-if="!['/', '/sign-up', '/sign-in'].includes(route.path) " 
+        <div v-else-if="routeShowsSidebar " 
           class="w-48 bg-theme-bg-darker-2 h-full min-h-[calc(100vh-4rem)] 
           flex flex-col items-center gap-2 p-4">
           <USkeleton class="w-full h-4 rounded-lg" v-for="n in 3" :key="n" />
@@ -175,6 +175,18 @@ const handleCreateDatabase = async () => {
     console.error('Failed to create database:', error)
   }
 }
+
+const routeShowsSidebar = computed(() => {
+  let route_parts = route.value.path.split('/')
+  console.log('Route parts:', route_parts)
+  return ![
+    '',
+    'sign-up',
+    'sign-in',
+    'forgot-password',
+    'reset-password'
+  ].includes(route_parts[1] ?? '')
+})
 
 //  Validate database name.  Must be non-empty and unique among user's databases.
 const validDBName = computed(() => {

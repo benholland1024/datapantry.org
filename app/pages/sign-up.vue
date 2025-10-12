@@ -1,9 +1,11 @@
 <template>
   <div class="w-screen min-h-[calc(100vh-4rem)] flex justify-center items-center">
     <!-- Centered content  -->
-    <div class="flex flex-col gap-4 w-64">
+    <div class="flex flex-col gap-4 w-64 relative">
       <h3 class="bold text-lg">Sign Up</h3>
-      <UInput v-model="username" placeholder="" :ui="{ base: 'peer' }" >
+      <UInput v-model="username" placeholder="" :ui="{ base: 'peer' }" 
+        tabindex="1" :color="validation.username ? 'neutral' : 'error'"
+      >
         <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted 
           text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5
           peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
@@ -13,9 +15,40 @@
           <span class="inline-flex bg-default px-1">Username</span>
         </label>
       </UInput>
-      
-      <UInput v-model="password" placeholder="" 
-        :ui="{ base: 'peer', trailing: 'pe-1' }" :type="showPass ? 'text' : 'password'">
+
+      <!--  Email input  -->
+      <UInput v-model="email" placeholder="" :ui="{ base: 'peer' }" 
+        tabindex="2" :color="validation.email ? 'neutral' : 'error'"
+      >
+        <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted 
+          text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5
+          peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
+          peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed 
+          peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+        >
+          <span class="inline-flex bg-default px-1">Email (optional)</span>
+        </label>
+        <template #trailing>
+          <UTooltip :content="{ side: 'right' }" :delay-duration="0">
+            <template #content>
+              <span class="text-sm">For password recovery only.</span><br/>
+            </template>
+            <UIcon
+              name="i-lucide-info"
+              class="text-white/50"
+              :aria-label="'Email is optional'"
+              :aria-hidden="false"
+              tabindex="-1"
+            />
+          </UTooltip>
+        </template>
+      </UInput>
+
+      <UInput v-model="password" placeholder="" tabindex="3"
+        :ui="{ base: 'peer', trailing: 'pe-1' }" :type="showPass ? 'text' : 'password'"
+        :color="validation.password ? 'neutral' : 'error'"
+        @keyup.enter="sign_up()"
+      >
         <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted 
           text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5
           peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium 
@@ -27,8 +60,10 @@
         <template #trailing>
           <UButton
             color="neutral"
+            tabindex="4"
             variant="link"
             size="sm"
+            class="cursor-pointer"
             :icon="showPass ? 'i-lucide-eye-off' : 'i-lucide-eye'"
             :aria-label="showPass ? 'Hide password' : 'showPass password'"
             :aria-pressed="showPass"
@@ -40,6 +75,8 @@
       
       <div class="flex gap-2">
         <UButton
+          tabindex="5"
+          :loading="loading"
           color="primary"
           class="cursor-pointer"
           @click="sign_up()"
@@ -48,7 +85,18 @@
         </UButton>
       </div>
 
-      <p v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</p>
+      <!--  Have an account? Sign in!  -->
+      <UButton
+        variant="link"
+        class="text-white/40 cursor-pointer text-left px-0"
+        to="/sign-in"
+        tabindex="6"
+      >
+        Have an account? Sign in!
+      </UButton>
+
+      <p v-if="errorMessage" class="text-error text-sm absolute -bottom-10">{{ errorMessage }}</p>
+      <p v-if="validation.msg" class="text-error text-sm absolute -bottom-4">{{ validation.msg }}</p>
 
     </div>
   </div>
@@ -67,6 +115,24 @@ const username = ref('')
 const showPass = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
+
+const validation = computed(() => {
+  let validation = {
+    email: true,
+    password: true,
+    username: true,
+    msg: ''
+  }
+  if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    validation.msg = 'Invalid email format'
+    validation.email = false
+  }
+  if (password.value.length >= 1 &&password.value.length < 6) {
+    validation.msg = 'Password must be at least 6 characters'
+    validation.password = false
+  }
+  return validation
+})
 
 async function sign_up() {
   loading.value = true
