@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/reset-password
+ * POST /api/user/reset-password
  * Body: { token: string, newPassword: string }
  * 
  * This endpoint verifies the reset token, updates the user's password,

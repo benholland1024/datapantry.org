@@ -85,6 +85,13 @@
         </UButton>
       </div>
 
+      <!-- Divider -->
+      <div class="relative flex items-center my-4">
+        <div class="flex-grow border-t border-gray-600"></div>
+        <span class="flex-shrink mx-4 text-gray-400 text-sm">or</span>
+        <div class="flex-grow border-t border-gray-600"></div>
+      </div>
+
       <!--  Have an account? Sign in!  -->
       <UButton
         variant="link"
@@ -139,7 +146,7 @@ async function sign_up() {
   errorMessage.value = ''
   
   try {
-    const response = await $fetch('/api/auth/signup', {
+    const response = await $fetch('/api/user/signup', {
       method: 'POST',
       body: {
         email: email.value,

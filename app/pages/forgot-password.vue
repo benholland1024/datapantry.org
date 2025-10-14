@@ -80,7 +80,7 @@ const sendError = ref('')
 const forgotPassword = async () => {
 
   try {
-    await $fetch('/api/auth/forgot-password', {
+    await $fetch('/api/user/forgot-password', {
       method: 'POST',
       body: { email: email.value }
     })

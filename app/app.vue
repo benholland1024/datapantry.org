@@ -198,12 +198,13 @@ if (process.client) {
   const sessionId = localStorage.getItem('sessionId')
   if (sessionId && !currentUser.value) {
     // Use .then() instead of await to avoid blocking
-    $fetch('/api/auth/validate-session', {
+    $fetch('/api/user/validate-session', {
       method: 'POST',
       body: { sessionId }
-    }).then(response => {
-      if (response.success) {
-        setCurrentUser(response.user as any)
+    }).then((response) => {
+      const res = response as { success: boolean; user?: any }
+      if (res.success) {
+        setCurrentUser(res.user as any)
       }
       loading.value = false
     }).catch(error => {

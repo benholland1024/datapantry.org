@@ -42,6 +42,7 @@
         @click="change_password()" 
         color="primary" 
         tabindex="2"
+        class="cursor-pointer flex justify-center"
       >
         Update Password
       </UButton>
@@ -98,7 +99,7 @@ const change_password = async () => {
 
   try {
     console.log('Token:', token, 'New Password:', password.value)
-    await $fetch('/api/auth/reset-password', {
+    await $fetch('/api/user/reset-password', {
       method: 'POST',
       body: { 
         newPassword: password.value,

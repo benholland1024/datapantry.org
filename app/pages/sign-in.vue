@@ -92,7 +92,7 @@ async function sign_in() {
   errorMessage.value = ''
   
   try {
-    const response = await $fetch('/api/auth/signin', {
+    const response = await $fetch('/api/user/signin', {
       method: 'POST',
       body: {
         username: username.value,
