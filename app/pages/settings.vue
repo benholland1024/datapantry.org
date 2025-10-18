@@ -1,5 +1,5 @@
 <template>
-  <DocsPageWrapper>
+  <ColumnPageWrapper>
     <h3>&#9881; Settings</h3>
     <hr class="mb-8"/>
 
@@ -103,11 +103,11 @@
 
     </div>
 
-  </DocsPageWrapper>
+  </ColumnPageWrapper>
 </template>
 
 <script setup lang="ts">
-import DocsPageWrapper from '@/components/atoms/DocsPageWrapper.vue';
+import ColumnPageWrapper from '~/components/atoms/ColumnPageWrapper.vue';
 import NiceInput from '@/components/atoms/NiceInput.vue'
 import { useDatabase } from '@/composables/useDatabase'
 const { currentUser, loading } = useDatabase()

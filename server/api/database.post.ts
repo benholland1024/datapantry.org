@@ -3,6 +3,12 @@
  * Create a new database for the authenticated user.
  * Expects: { name: string, sessionId: string }
  * Returns: { success: boolean, database: { id, name, createdAt, tables: [] } }
+ * 
+ * Security checklist:
+ * - [x] Validate session ID
+ * - [x] Ensure user can only create databases for themselves
+ * - [x] Sanitize and validate database name
+ * - [ ] Handle errors gracefully without exposing sensitive info
  */
 
 import { eq } from 'drizzle-orm'

@@ -71,7 +71,10 @@ export default defineEventHandler(async (event) => {
       String(sessionWithUser.userId),
       `${databaseId}.sqlite`
     )
-    fs.unlinkSync(sqlitePath)
+    // Check if file exists before trying to delete
+    if (fs.existsSync(sqlitePath)) {
+      fs.unlinkSync(sqlitePath)
+    }
 
     // Delete all userTablePositions associated with the database
     await db

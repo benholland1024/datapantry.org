@@ -1,5 +1,5 @@
 <template>
-  <DocsPageWrapper>
+  <ColumnPageWrapper>
     <LinkableHeader tagName="h1" linkName="api-basics">&#128118; API Basics</LinkableHeader>
 
     <p class="!mb-16">
@@ -73,11 +73,11 @@ Authorization: Bearer YOUR_API_KEY`"
       or 
       <NuxtLink to="/api-docs/raw-api" class="text-blue-500 hover:underline">raw HTTP API</NuxtLink> pages.
     </p>
-  </DocsPageWrapper>
+  </ColumnPageWrapper>
 </template>
 
 <script setup lang="ts">
-import DocsPageWrapper from '~/components/atoms/DocsPageWrapper.vue';
+import ColumnPageWrapper from '~/components/atoms/ColumnPageWrapper.vue';
 import NiceImage from '~/components/atoms/NiceImage.vue';
 import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 import CodeRender from '~/components/atoms/CodeRender.vue';

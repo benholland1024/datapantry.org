@@ -1,5 +1,5 @@
 <template>
-  <DocsPageWrapper>
+  <ColumnPageWrapper>
     <!------------->
     <!--  Intro  -->
     <!------------->
@@ -71,12 +71,12 @@
       Okay, you should be ready to rock. Have fun out there.  &#128640;
     </p>
       
-  </DocsPageWrapper>
+  </ColumnPageWrapper>
 </template>
 
 <script setup lang="ts">
 
-import DocsPageWrapper from '~/components/atoms/DocsPageWrapper.vue';
+import ColumnPageWrapper from '~/components/atoms/ColumnPageWrapper.vue';
 import CodeRender from '~/components/atoms/CodeRender.vue';
 import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 import NiceImage from '~/components/atoms/NiceImage.vue';

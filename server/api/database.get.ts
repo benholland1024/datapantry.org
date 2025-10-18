@@ -2,6 +2,12 @@
  * GET /api/database
  * Fetch all databases for the authenticated user, including their tables,
  *   but NOT the columns within those tables.
+ * 
+ * Security checklist: 
+ *  - [x] Validate session ID
+ *  - [x] Ensure user can only access their own databases
+ *  - [ ] Do not expose sensitive information (e.g., API keys) unnecessarily
+ * 
  */
 
 import { eq, inArray } from 'drizzle-orm'

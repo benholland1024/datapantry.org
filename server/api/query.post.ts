@@ -11,6 +11,12 @@
  * Body:
  * - query: string (required)
  * - parameters: any[] (optional)
+ * 
+ * Security checklist:
+ * - [x] Validate API key and retrieve associated database path.
+ * - [x] Disallow schema modification queries (ALTER, DROP, CREATE, etc.).
+ * - [x] Use parameterized queries to prevent SQL injection.
+ * - [ ] Limit query execution time and result size 
  */
 
 import Database from 'better-sqlite3'

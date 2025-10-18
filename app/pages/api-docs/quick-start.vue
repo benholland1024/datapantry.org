@@ -1,5 +1,5 @@
 <template>
-  <DocsPageWrapper>
+  <ColumnPageWrapper>
     <LinkableHeader tagName="h1" linkName="quick-start">
       &#x1F680; Quick start. 
     </LinkableHeader>
@@ -12,11 +12,11 @@
     <CodeRender :code="exampleNPMusage.trim()" language="javascript" 
       class="mb-4" filename="server.js"
     />
-  </DocsPageWrapper>
+  </ColumnPageWrapper>
 </template>
 
 <script setup lang="ts">
-import DocsPageWrapper from '~/components/atoms/DocsPageWrapper.vue';
+import ColumnPageWrapper from '~/components/atoms/ColumnPageWrapper.vue';
 import CodeRender from '~/components/atoms/CodeRender.vue';
 import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 
