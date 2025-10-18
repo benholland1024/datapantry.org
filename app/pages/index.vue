@@ -10,7 +10,8 @@
         <p style="color:var(--blue); font-style: italic;">Turn schemas into real databases</p>
         <h2 class="text-8xl bold mb-4">Easy, visual, secure database mgmt.</h2>
         <p style="font-size: 1.5em;">
-          DataPantry is still in beta. <br/>Send feedback to <a href="mailto:benholland1024@gmail.com">benholland1024@gmail.com</a>.
+          DataPantry is still in beta testing. 
+          <br/>Send feedback to <a href="mailto:benholland1024@gmail.com">benholland1024@gmail.com</a>.
         </p>
         <br/>
         <div class="flex gap-4 mb-8">
@@ -204,6 +205,7 @@ function auto_move() {
 
 const interval = ref<any>(null);
 onMounted(() => {
+  console.log("Testing the Git hook!")
   initPoints()
   animate()
   interval.value = setInterval(auto_move, 1000)
