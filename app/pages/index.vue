@@ -205,7 +205,7 @@ function auto_move() {
 
 const interval = ref<any>(null);
 onMounted(() => {
-  console.log("Testing the Git hook!")
+  console.log("Testing the Git hook")
   initPoints()
   animate()
   interval.value = setInterval(auto_move, 1000)
