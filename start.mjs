@@ -9,4 +9,4 @@ console.log('Loaded env vars:', {
 })
 
 // Import and start the server
-await import('./../.output/server/index.mjs')
+await import('./.output/server/index.mjs')
