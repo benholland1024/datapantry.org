@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1759351780331,
-      "tag": "0000_chubby_magma",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760276039102,
-      "tag": "0001_boring_starfox",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1760281713661,
-      "tag": "0002_quick_runaways",
+      "when": 1760870823669,
+      "tag": "0000_rare_carnage",
       "breakpoints": true
     }
   ]
