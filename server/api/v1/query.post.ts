@@ -21,8 +21,8 @@
 
 import Database from 'better-sqlite3'
 import path from 'path'
-import { userDatabases } from '../postgresDB/schema'
-import { db } from '../postgresDB'
+import { userDatabases } from '../../postgresDB/schema'
+import { db } from '../../postgresDB'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {

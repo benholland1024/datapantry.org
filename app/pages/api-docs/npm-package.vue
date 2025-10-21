@@ -30,11 +30,9 @@ import { ref } from 'vue';
 
 const exampleNPMusage = ref(`
 
-import { Datapantry } from 'datapantry';
+import DataPantry from 'datapantry';
 
-const dp = new Datapantry({
-  apiKey: 'YOUR_API_KEY',
-});
+const dp = DataPantry.database('YOUR_API_KEY');
 
 async function test() {
   const schema = await myDatabase.schema()  //  { DBname: String, tables: [] }
