@@ -12,6 +12,7 @@
       <UIcon name="mdi:hashtag" class="relative top-[2px]"/>
     </div>
     <slot />
+    <span v-if="html" v-html="html"></span>
   </component>
 </template>
 
@@ -21,6 +22,7 @@ import { defineProps } from 'vue';
 const props = defineProps<{
   tagName: string;
   linkName: string;
+  html?: string;
 }>();
 
 function copyLink() {

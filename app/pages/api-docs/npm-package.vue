@@ -18,6 +18,40 @@
     <CodeRender :code="exampleNPMusage.trim()" language="javascript" 
       class="mb-4" filename="server.js"
     />
+    <p class="!mb-8">&#x1F603;</p>
+    <p>Here are a few more examples, followed by the full documentation of all methods:</p>
+    <CodeRender :code="exampleNPMusage2.trim()" language="javascript" 
+      class="mb-4" filename="server.js"
+    />
+    <br/><br/><br/><br/>
+    <h2>Full NPM Package Method Documentation</h2>
+    <p>The methods below can be chained onto your DataPantry database (except the "helper" methods).</p>
+    <div v-for="category in methodListByCategory"
+      :key="category.name" 
+      class="mt-8 mb-4 px-4 py-4 bg-content border rounded-lg"
+      :style="{ borderColor: category.borderColor }"
+    >
+      <h3 class="text-lg text-center"> &#10070; <b>{{ category.name }}</b> &#10070;</h3>
+      <div v-for="method in category.methods"
+        :key="method.name"
+        class="my-[32px]"
+      >
+        <LinkableHeader 
+          tagName="h3" 
+          :linkName="method.name"
+          class="text-md"
+          :html="highlightMethodName(method.name, category.textColor)"
+        />
+        <p class="mb-2">Arguments: <b>{{ method.arguments }}</b></p>
+        <p>Example:</p>
+        <CodeRender 
+          :code="generateExample(method)" 
+          language="javascript" 
+          class="mb-4" 
+          :filename="method.name + '-example.js'"
+        />
+      </div>
+    </div>
   </ColumnPageWrapper>
 </template>
 
@@ -28,20 +62,223 @@ import CodeRender from '~/components/atoms/CodeRender.vue';
 import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 import { ref } from 'vue';
 
+type MethodItem = { name: string; arguments: string; description?: string, examples?: string[] };
+type MethodCategory = { name: string; borderColor: string; textColor: string; methods: MethodItem[] };
+type MethodMap = MethodCategory[];
+
 const exampleNPMusage = ref(`
 
 import DataPantry from 'datapantry';
 
-const dp = DataPantry.database('YOUR_API_KEY');
+const db = DataPantry.database('YOUR_API_KEY');
 
 async function test() {
-  const schema = await myDatabase.schema()  //  { DBname: String, tables: [] }
-  const DEcustomers = await myDatabase.sql(
-    'SELECT * FROM Customers WHERE country = ?', 'DE'
+  const schema = await db.schema()  //  { DBname: String, tables: [] }
+
+  //  Use these "chainable" query builders:
+  const bluePaperclips = await db.select('*')
+    .from('PaperclipCollection')
+    .where({ color: 'blue' })
+
+  //  Or if you'd prefer, use raw SQL:
+  const redPaperclips = await db.sql(
+    'SELECT * FROM PaperclipCollection WHERE color = ?', 'red'
   )
-  console.log("Schema:", schema, "Customers in Germany:", DEcustomers);
+  console.log("Schema:", schema, "Blue Paperclips:", bluePaperclips, "Red Paperclips:", redPaperclips);
 }
 test()
 
 `)
+
+const exampleNPMusage2 = ref(`
+// SELECT with conditions
+const users = await db.select('*').from('users')
+  .where(gt('age', 18))
+  .where(eq('country', 'DE'))
+  .orderBy('name', 'ASC')
+  .limit(10)
+
+// INSERT
+await db.insert('users')
+  .values({ name: 'Alice', email: 'alice@example.com' })
+
+// UPDATE
+await db.update('users')
+  .set({ status: 'active' })
+  .where(eq('id', 123))
+
+// DELETE
+await db.delete().from('users')
+  .where(lt('lastLogin', '2024-01-01'))
+`);
+
+const methodListByCategory = ref<MethodMap>([
+  { 
+    name: 'SELECT',
+    borderColor: '#4CA378',
+    textColor: '#6CE398',
+    methods: [
+      { 
+        name: '.`select`(...columns)',
+        arguments: 'Specify columns or "*"',
+        examples: ['await db.select("name", "age")', 'await db.select("*")']
+      },
+      { 
+        name: '.`from`(tableName)',
+        arguments: 'Table name',
+        examples: ['await db.select("*").from("users")']
+      },
+      { 
+        name: '.`where`(condition)',
+        arguments: 'Filtering conditions (see helper functions below)',
+        description: 'Add filtering conditions to your SELECT query. You can chain multiple where() calls to combine conditions with AND logic.',
+        examples: ['await db.select("*").from("users").where(eq("age", 18))', 'await db.select("*").from("users").where(eq("age", 18)).where(eq("country", "DE"))']
+      },
+      { 
+        name: '.`orWhere`(condition)',
+        arguments: 'Filtering conditions (see helper functions below)',
+        description: 'Add OR conditions to your SELECT query. This can be used in combination with where().',
+        examples: ['await db.select("*").from("users").where(eq("age", 18)).orWhere(eq("country", "DE"))']
+      },
+      { 
+        name: '.`orderBy`(columnName, direction?)',
+        arguments: "First argument: A column name. Second argument: 'ASC' or 'DESC' (default 'ASC')",
+        description: 'Specify the sort order for the results.',
+        examples: ['await db.select("*").from("users").orderBy("name", "ASC")']
+      },
+      { 
+        name: '.`limit`(n)',
+        arguments: 'An integer number',
+        description: 'Limit the number of results returned.',
+        examples: ['await db.select("*").from("users").limit(10)']
+      },
+      { 
+        name: '.`offset`(n)',
+        arguments: 'An integer number',
+        description: 'Skip the first n results. Useful for pagination.',
+        examples: ['await db.select("*").from("users").offset(20)']
+      },
+      { 
+        name: '.`join`(tableName, condition)',
+        arguments: 'First argument: A table name. Second argument: A condition (see helper functions below)',
+        description: 'Join another table on a condition.',
+        examples: ['await db.select("*").from("users").join("orders", eq("users.id", "orders.userId"))']
+      },
+      { 
+        name: '.`leftJoin`(tableName, condition)',
+        arguments: 'First argument: A table name. Second argument: A condition (see helper functions below)',
+        description: 'Left join another table on a condition.',
+        examples: ['await db.select("*").from("users").leftJoin("orders", eq("users.id", "orders.userId"))']
+      },
+    ],
+  }, {
+    name: 'INSERT',
+    borderColor: '#F8DC94',
+    textColor: '#F8DC94',
+    methods: [
+      {
+        name: '.`insert`(tableName).values(data)',
+        arguments: 'First argument: a table name. Second argument: A single object or array of objects',
+        examples: ['insert("users").values({ name: "Alice", email: "alice@example.com" })']
+      },
+      // { name: 'insert(table).values([...]).returning("*")', arguments: 'Return inserted rows (if supported)' },
+    ],
+  }, {
+    name: 'UPDATE',
+    borderColor: '#E8A05C',
+    textColor: '#E8A05C',
+    methods: [
+      {
+        name: '.`update`(tableName).set(data).where(condition)',
+        arguments: 'First argument: a table name. Second argument: an object with the columns to update.',
+        examples: ['update("users").set({ age: 30 }).where(eq("id", 123))']
+      },
+    ],
+  }, {
+    name: 'DELETE',
+    borderColor: '#D45978',
+    textColor: '#D45978',
+    methods: [
+      {
+        name: '.`delete`().from(tableName).where(condition)',
+        arguments: 'First argument: a table name. Second argument: a condition (see helper functions below)',
+        examples: ['delete().from("users").where(eq("id", 123))']
+      },
+    ],
+  }, {
+    name: 'Execution',
+    borderColor: '#A15FAE',
+    textColor: '#A15FAE',
+    methods: [
+      {
+        name: '.`first`()',
+        arguments: 'Return first result only',
+        examples: ['await db.select("*").from("users").first()']
+      },
+      {
+        name: '.`count`()',
+        arguments: 'Return count instead of rows',
+        examples: ['await db.select("*").from("users").count()']
+      },
+    ],
+  }, {
+    name: 'Helper functions for conditions',
+    borderColor: '#4B5799',
+    textColor: '#8B97E9',
+    methods: [
+      {
+        name: '`eq`(column, value)',
+        arguments: 'Equals',
+        examples: ['where(eq("age", 18))']
+      },
+      {
+        name: '`ne`(column, value)',
+        arguments: 'Not equals',
+        examples: ['where(ne("age", 18))']
+      },
+      {
+        name: '`gt`(column, value)',
+        arguments: 'Greater than',
+        examples: ['where(gt("age", 18))']
+      },
+      {
+        name: '`gte`(column, value)',
+        arguments: 'Greater/equal',
+        examples: ['where(gte("age", 18))']
+      },
+      {
+        name: '`lt`(column, value)',
+        arguments: 'Less than',
+        examples: ['where(lt("age", 18))']
+      },
+      {
+        name: '`lte`(column, value)',
+        arguments: 'Less/equal',
+        examples: ['where(lte("age", 18))']
+      },
+      {
+        name: '`like`(column, pattern)',
+        arguments: 'LIKE operator',
+        examples: ['where(like("name", "%Alice%"))']
+      },
+      {
+        name: '`in`(column, values)',
+        arguments: 'IN operator',
+        examples: ['where(in("id", [1, 2, 3]))']
+      },
+    ],
+  }
+]);
+
+function generateExample(method: MethodItem): string {
+  if (method.examples && method.examples.length > 0) {
+    return method.examples.join('\n\n');
+  }
+  return `// Example for ${method.name} not provided.`;
+}
+
+function highlightMethodName(methodName: string, color: string): string {
+  let finalName = methodName.replace('`', `<span style="color: ${color}">`).replace('`', '</span>');
+  return finalName;
+}
 </script>
