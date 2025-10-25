@@ -42,7 +42,9 @@
           class="text-md"
           :html="highlightMethodName(method.name, category.textColor)"
         />
-        <p class="mb-2">Arguments: <b>{{ method.arguments }}</b></p>
+        <p class="mb-2" v-for="(argument, index) in method.arguments" :key="index">
+          <b>Argument {{ index + 1 }}:</b> {{ argument }}
+        </p>
         <p>Example:</p>
         <CodeRender 
           :code="generateExample(method)" 
@@ -62,7 +64,7 @@ import CodeRender from '~/components/atoms/CodeRender.vue';
 import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 import { ref } from 'vue';
 
-type MethodItem = { name: string; arguments: string; description?: string, examples?: string[] };
+type MethodItem = { name: string; arguments: string[]; description?: string, examples?: string[] };
 type MethodCategory = { name: string; borderColor: string; textColor: string; methods: MethodItem[] };
 type MethodMap = MethodCategory[];
 
@@ -120,54 +122,56 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       { 
         name: '.`select`(...columns)',
-        arguments: 'Specify columns or "*"',
+        arguments: ['Specify columns or "*"'],
         examples: ['await db.select("name", "age")', 'await db.select("*")']
       },
       { 
         name: '.`from`(tableName)',
-        arguments: 'Table name',
+        arguments: ['Table name'],
         examples: ['await db.select("*").from("users")']
       },
       { 
         name: '.`where`(condition)',
-        arguments: 'Filtering conditions (see helper functions below)',
+        arguments: ['Filtering conditions (see helper functions below)'],
         description: 'Add filtering conditions to your SELECT query. You can chain multiple where() calls to combine conditions with AND logic.',
         examples: ['await db.select("*").from("users").where(eq("age", 18))', 'await db.select("*").from("users").where(eq("age", 18)).where(eq("country", "DE"))']
       },
       { 
         name: '.`orWhere`(condition)',
-        arguments: 'Filtering conditions (see helper functions below)',
+        arguments: ['Filtering conditions (see helper functions below)'],
         description: 'Add OR conditions to your SELECT query. This can be used in combination with where().',
         examples: ['await db.select("*").from("users").where(eq("age", 18)).orWhere(eq("country", "DE"))']
       },
       { 
         name: '.`orderBy`(columnName, direction?)',
-        arguments: "First argument: A column name. Second argument: 'ASC' or 'DESC' (default 'ASC')",
+        arguments: ["A column name.", "'ASC' or 'DESC' (default 'ASC')"],
         description: 'Specify the sort order for the results.',
         examples: ['await db.select("*").from("users").orderBy("name", "ASC")']
       },
       { 
         name: '.`limit`(n)',
-        arguments: 'An integer number',
+        arguments: ['An integer number'],
         description: 'Limit the number of results returned.',
         examples: ['await db.select("*").from("users").limit(10)']
       },
       { 
         name: '.`offset`(n)',
-        arguments: 'An integer number',
+        arguments: ['An integer number'],
         description: 'Skip the first n results. Useful for pagination.',
         examples: ['await db.select("*").from("users").offset(20)']
       },
       { 
-        name: '.`join`(tableName, condition)',
-        arguments: 'First argument: A table name. Second argument: A condition (see helper functions below)',
-        description: 'Join another table on a condition.',
+        name: '.`join`(tableName, conditionString)',
+        arguments: [`A table name.`, `A condition string (e.g. "users.id = orders.userId"). 
+                    CAUTION: Do not use user-provided input directly in the condition string to avoid SQL injection vulnerabilities.`],
+        description: 'Inner join another table on a condition. This will only return rows that have matching values in both tables.',
         examples: ['await db.select("*").from("users").join("orders", eq("users.id", "orders.userId"))']
       },
       { 
-        name: '.`leftJoin`(tableName, condition)',
-        arguments: 'First argument: A table name. Second argument: A condition (see helper functions below)',
-        description: 'Left join another table on a condition.',
+        name: '.`leftJoin`(tableName, conditionString)',
+        arguments: [`A table name.`, `A condition string (e.g. "users.id = orders.userId"). 
+                    CAUTION: Do not use user-provided input directly in the condition string to avoid SQL injection vulnerabilities.`],
+        description: 'Left join another table on a condition. This will return all rows from the left table, and the matched rows from the right table. If there is no match, the result is NULL on the right side.',
         examples: ['await db.select("*").from("users").leftJoin("orders", eq("users.id", "orders.userId"))']
       },
     ],
@@ -178,7 +182,7 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       {
         name: '.`insert`(tableName).values(data)',
-        arguments: 'First argument: a table name. Second argument: A single object or array of objects',
+        arguments: ['A table name.', 'A single object or array of objects'],
         examples: ['insert("users").values({ name: "Alice", email: "alice@example.com" })']
       },
       // { name: 'insert(table).values([...]).returning("*")', arguments: 'Return inserted rows (if supported)' },
@@ -190,7 +194,7 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       {
         name: '.`update`(tableName).set(data).where(condition)',
-        arguments: 'First argument: a table name. Second argument: an object with the columns to update.',
+        arguments: ['A table name.', 'An object with the columns to update.'],
         examples: ['update("users").set({ age: 30 }).where(eq("id", 123))']
       },
     ],
@@ -201,7 +205,7 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       {
         name: '.`delete`().from(tableName).where(condition)',
-        arguments: 'First argument: a table name. Second argument: a condition (see helper functions below)',
+        arguments: ['A table name.', 'A condition (see helper functions below)'],
         examples: ['delete().from("users").where(eq("id", 123))']
       },
     ],
@@ -212,12 +216,12 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       {
         name: '.`first`()',
-        arguments: 'Return first result only',
+        arguments: ['Return first result only'],
         examples: ['await db.select("*").from("users").first()']
       },
       {
         name: '.`count`()',
-        arguments: 'Return count instead of rows',
+        arguments: ['Return count instead of rows'],
         examples: ['await db.select("*").from("users").count()']
       },
     ],
@@ -228,43 +232,43 @@ const methodListByCategory = ref<MethodMap>([
     methods: [
       {
         name: '`eq`(column, value)',
-        arguments: 'Equals',
+        arguments: ['Equals'],
         examples: ['where(eq("age", 18))']
       },
       {
         name: '`ne`(column, value)',
-        arguments: 'Not equals',
+        arguments: ['Not equals'],
         examples: ['where(ne("age", 18))']
       },
       {
         name: '`gt`(column, value)',
-        arguments: 'Greater than',
+        arguments: ['Greater than'],
         examples: ['where(gt("age", 18))']
       },
       {
         name: '`gte`(column, value)',
-        arguments: 'Greater/equal',
+        arguments: ['Greater/equal'],
         examples: ['where(gte("age", 18))']
       },
       {
         name: '`lt`(column, value)',
-        arguments: 'Less than',
+        arguments: ['Less than'],
         examples: ['where(lt("age", 18))']
       },
       {
         name: '`lte`(column, value)',
-        arguments: 'Less/equal',
+        arguments: ['Less/equal'],
         examples: ['where(lte("age", 18))']
       },
       {
         name: '`like`(column, pattern)',
-        arguments: 'LIKE operator',
+        arguments: ['LIKE operator'],
         examples: ['where(like("name", "%Alice%"))']
       },
       {
-        name: '`in`(column, values)',
-        arguments: 'IN operator',
-        examples: ['where(in("id", [1, 2, 3]))']
+        name: '`inArray`(column, values)',
+        arguments: ['inArray operator'],
+        examples: ['where(inArray("id", [1, 2, 3]))']
       },
     ],
   }
