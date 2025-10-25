@@ -32,6 +32,7 @@
       :style="{ borderColor: category.borderColor }"
     >
       <h3 class="text-lg text-center"> &#10070; <b>{{ category.name }}</b> &#10070;</h3>
+      <p class="text-center mb-4" v-if="category.description">{{ category.description }}</p>
       <div v-for="method in category.methods"
         :key="method.name"
         class="my-[32px]"
@@ -65,7 +66,13 @@ import LinkableHeader from '~/components/atoms/LinkableHeader.vue';
 import { ref } from 'vue';
 
 type MethodItem = { name: string; arguments: string[]; description?: string, examples?: string[] };
-type MethodCategory = { name: string; borderColor: string; textColor: string; methods: MethodItem[] };
+type MethodCategory = {
+  name: string;
+  description?: string;
+  borderColor: string;
+  textColor: string;
+  methods: MethodItem[]
+};
 type MethodMap = MethodCategory[];
 
 const exampleNPMusage = ref(`
@@ -179,6 +186,7 @@ const methodListByCategory = ref<MethodMap>([
     name: 'INSERT',
     borderColor: '#F8DC94',
     textColor: '#F8DC94',
+    description: 'Insert new rows into a table. Expect this response back: { changes: 1, lastInsertRowid: 5 }',
     methods: [
       {
         name: '.`insert`(tableName).values(data)',
