@@ -178,7 +178,6 @@ const handleCreateDatabase = async () => {
 
 const routeShowsSidebar = computed(() => {
   let route_parts = route.value.path.split('/')
-  console.log('Route parts:', route_parts)
   return ![
     '',
     'sign-up',
