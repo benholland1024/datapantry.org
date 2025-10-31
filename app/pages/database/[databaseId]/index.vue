@@ -249,7 +249,7 @@ const loadSchema = async () => {
   isLoading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`) as { tables: any[] }
+    const response = await $fetch('/api/database/' + databaseId + '?sessionId=' + sessionId) as unknown as { tables: any[] }
     tables.value = response.tables
 
     //  Add unique IDs to table columns, for editing

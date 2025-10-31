@@ -314,7 +314,7 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
       {
         label: 'Examples',
         icon: 'streamline:angle-brackets-remix',
-        disabled: true
+        to: '/examples'
       },
       {
         label: 'About Us',

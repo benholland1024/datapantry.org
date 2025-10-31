@@ -6,6 +6,9 @@
       <li><a href="/examples/pixel-place">Sample Database 1</a></li>
       <li><a href="/examples/recipe-mouse">Sample Database 2</a></li>
     </ul>
+    <div class="mt-8">
+      <iframe src="https://pixel.datapantry.org" class="w-full h-[600px] border-0"></iframe>
+    </div>
   </ColumnPageWrapper>
 </template>
 
