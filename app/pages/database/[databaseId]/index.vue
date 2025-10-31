@@ -40,6 +40,7 @@
       :open="openSaveChangesModal" 
       title="Unsaved changes! "
       :closeable="true"
+      :close="{ onClick: () => {openSaveChangesModal = false} }"
       size="lg"
     >
       <template #body>
@@ -354,6 +355,11 @@ watch(currentDatabase, () => {
     loadSchema()
   }
 }, { immediate: true })
+
+// Warn if db name has unsaved changes
+watch(databaseNameDraft, () => {
+  hasUnsavedChanges.value = databaseNameDraft.value !== currentDatabase.value?.name
+})
 
 
 const handleTableUpdate = (tableName: string, updates: any) => {

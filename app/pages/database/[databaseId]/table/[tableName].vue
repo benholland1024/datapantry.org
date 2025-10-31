@@ -9,7 +9,7 @@
       >
         Back to Database
       </UButton>
-      <h1 class="text-3xl font-bold" v-if="currentTable && currentTable.name">
+      <h1 class="text-3xl font-bold truncate" v-if="currentTable && currentTable.name">
         {{ currentTable?.name }}
       </h1>
       <USkeleton v-else class="h-8 w-1/3" />
@@ -65,87 +65,90 @@
       </div>
 
       <!-- Data Table -->
-      <UTable 
-        :data="tableRowData"
-        :columns="tableColumns"
-        v-model:row-selection="selectedRows"
-        :ui="{ 
-          tbody: 'divide-y divide-gray-700',
-          tr: 'hover:bg-gray-700/30'
-        }"
-      >
-        <!-- Dynamic column header rendering -->
-        <template v-for="_column in dataColumns" 
-          :key="_column.key" 
-          #[`${_column.key}-header`]="{ column }"
+      <div class="w-full max-w-full">
+        <UTable 
+          :data="tableRowData"
+          :columns="tableColumns"
+          v-model:row-selection="selectedRows"
+          class="max-w-full [&>table]:!max-w-full [&>table]:!table-fixed [&>table]:!w-full"
+          :ui="{ 
+            tbody: 'divide-y divide-gray-700',
+            tr: 'hover:bg-gray-700/30'
+          }"
         >
-          <div class="flex items-center">
-            <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
-            <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
-            <UIcon v-else-if="_column.constraint === 'unique'" name="i-lucide-fingerprint" class="w-4 h-4 text-blue-400 mr-1" />
-            <span>{{ _column.label }}</span>
-          </div>
-        </template>
+          <!-- Dynamic column header rendering -->
+          <template v-for="_column in dataColumns" 
+            :key="_column.key" 
+            #[`${_column.key}-header`]="{ column }"
+          >
+            <div class="flex items-center">
+              <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
+              <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
+              <UIcon v-else-if="_column.constraint === 'unique'" name="i-lucide-fingerprint" class="w-4 h-4 text-blue-400 mr-1" />
+              <span>{{ _column.label }}</span>
+            </div>
+          </template>
 
-        <!-- Dynamic cell rendering -->
-        <template v-for="column in dataColumns" 
-          :key="column.key" 
-          #[`${column.key}-cell`]="{ row }"
-        >
-          <!-- Editable cell -->
-          <div v-if="isRowEditing(row.original._id)" class="px-4 py-5">
-            <UInput 
-              v-if="column.datatype === 'String'"
-              v-model="rowEditDraft.data[column.key]"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-            <UInput 
-              v-else-if="column.datatype === 'Number'"
-              v-model="rowEditDraft.data[column.key]"
-              type="number"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-            <USelectMenu
-              class="w-full"
-              :placeholder="`Select ${column.foreignKey?.columnName} from table '${ column.foreignKey?.tableId ? 
-                FKTables.find(t => t.tableId === column.foreignKey?.tableId)?.tableName : 'Unknown' }'`"
-              v-else-if="column.datatype === 'Foreign Key'"
-              :items="foreignKeyOptions[column.foreignKey?.tableId] || ['dang', column.foreignKey]"
-              v-model="rowEditDraft.data[column.key]"
-            />
-            <UInput 
-              v-else
-              v-model="rowEditDraft.data[column.key]"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-          </div>
+          <!-- Dynamic cell rendering -->
+          <template v-for="column in dataColumns" 
+            :key="column.key" 
+            #[`${column.key}-cell`]="{ row }"
+          >
+            <!-- Editable cell -->
+            <div v-if="isRowEditing(row.original._id)" class="px-4 py-5">
+              <UInput 
+                v-if="column.datatype === 'String'"
+                v-model="rowEditDraft.data[column.key]"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+              <UInput 
+                v-else-if="column.datatype === 'Number'"
+                v-model="rowEditDraft.data[column.key]"
+                type="number"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+              <USelectMenu
+                class="w-full"
+                :placeholder="`Select ${column.foreignKey?.columnName} from table '${ column.foreignKey?.tableId ? 
+                  FKTables.find(t => t.tableId === column.foreignKey?.tableId)?.tableName : 'Unknown' }'`"
+                v-else-if="column.datatype === 'Foreign Key'"
+                :items="foreignKeyOptions[column.foreignKey?.tableId] || ['dang', column.foreignKey]"
+                v-model="rowEditDraft.data[column.key]"
+              />
+              <UInput 
+                v-else
+                v-model="rowEditDraft.data[column.key]"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+            </div>
+            
+            <!-- Display cell -->
+            <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 rounded truncate">
+              {{ formatCellValue(row, column.key, column.datatype) }}
+            </div>
+          </template>
           
-          <!-- Display cell -->
-          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 rounded">
-            {{ formatCellValue(row, column.key, column.datatype) }}
-          </div>
-        </template>
-        
-        <!-- Actions column -->
-        <template #actions-cell="{ row }">
-          <UButton 
-            icon="i-lucide-trash-2" 
-            size="sm" 
-            color="error" 
-            variant="ghost"
-            @click="deleteRow(row.original._id)"
-          />
-        </template>
-      </UTable>
+          <!-- Actions column -->
+          <template #actions-cell="{ row }">
+            <UButton 
+              icon="i-lucide-trash-2" 
+              size="sm" 
+              color="error" 
+              variant="ghost"
+              @click="deleteRow(row.original._id)"
+            />
+          </template>
+        </UTable>
+      </div>
     </div>
 
     <div v-else class="text-center py-8">
