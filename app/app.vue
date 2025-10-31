@@ -178,7 +178,6 @@ const handleCreateDatabase = async () => {
 
 const routeShowsSidebar = computed(() => {
   let route_parts = route.value.path.split('/')
-  console.log('Route parts:', route_parts)
   return ![
     '',
     'sign-up',
@@ -315,7 +314,7 @@ const sidebarMenu = computed<NavigationMenuItem[][]>(() => {
       {
         label: 'Examples',
         icon: 'streamline:angle-brackets-remix',
-        disabled: true
+        to: '/examples'
       },
       {
         label: 'About Us',

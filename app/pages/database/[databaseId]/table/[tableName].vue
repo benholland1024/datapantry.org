@@ -299,9 +299,6 @@ const loadTableData = async () => {
     currentTable.value = response.table
     tableRows.value = response.rows || []
 
-    console.log("Columns:", currentTable.value.columns)
-    console.log("Rows:", tableRows.value)
-
     // Load all tables for FK dropdowns TODO
     for (const col of currentTable.value.columns) {
       if (col.datatype === 'Foreign Key' && col.foreignKey) {
@@ -314,7 +311,6 @@ const loadTableData = async () => {
           columnName: col.foreignKey.columnName,
           rows: fkResponse.rows || []
         })
-        console.log("FK Table Loaded:", FKTables.value  )
       }
     }
     
@@ -476,7 +472,6 @@ const deleteRow = async (rowId: string) => {
 
 //  Delete the selected rows
 const deleteSelected = async () => {
-  console.log("Deleting selected rows:", selectedRows.value )
   try {
     const sessionId = localStorage.getItem('sessionId')
 
@@ -490,7 +485,6 @@ const deleteSelected = async () => {
     for (const index of rowIndexes) {
       rowPKs.push(tableRows.value[parseInt(index)].data[pkColumn])
     }
-    console.log("Row primary keys to delete:", rowPKs)
 
     if (rowPKs.length === 0) return
 

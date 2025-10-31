@@ -359,7 +359,6 @@ const hasUnsavedChanges = computed(() => {
   let hasUnsavedChanges = false
   if (selectedTableData && selectedTableData.value) {
     hasUnsavedChanges = columnChanges.value.length > 0 || (selectedTableNewName.value !== selectedTableData.value.name)
-    console.log("Has unsaved changes:", hasUnsavedChanges, "columnChanges:", columnChanges.value, "name changed:", selectedTableNewName.value !== selectedTableData.value?.name)
 
   }
   return hasUnsavedChanges

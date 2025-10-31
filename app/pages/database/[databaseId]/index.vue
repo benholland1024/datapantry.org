@@ -249,10 +249,8 @@ const loadSchema = async () => {
   isLoading.value = true
   try {
     const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch(`/api/database/${databaseId}?sessionId=${sessionId}`) as { tables: any[] }
+    const response = await $fetch('/api/database/' + databaseId + '?sessionId=' + sessionId) as unknown as { tables: any[] }
     tables.value = response.tables
-
-    console.log("Tables after load:", tables.value)
 
     //  Add unique IDs to table columns, for editing
     tables.value.forEach(table => {
@@ -289,8 +287,6 @@ const saveSchema = async () => {
       method: 'POST',
       body: { tables: tablesToSave, sessionId }
     })
-
-    console.log("Schema saved successfully")
     
     saveStatus.value = 'saved'
     setTimeout(() => { saveStatus.value = 'idle' }, 2000)

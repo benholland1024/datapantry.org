@@ -29,7 +29,7 @@
         <!-- Connection lines -->
         <line 
           v-for="connection in connections" 
-          :key="connection.id"
+          :key="connection.name"
           :x1="connection.fromX" 
           :y1="connection.fromY"
           :x2="connection.toX" 
@@ -42,7 +42,7 @@
         <!-- Connection points (semicircles) -->
         <circle 
           v-for="point in connectionPoints" 
-          :key="point.id"
+          :key="point.name"
           :cx="point.x" 
           :cy="point.y" 
           r="8"
@@ -56,7 +56,7 @@
       <!------------>
       <!-- Tables -->
       <!------------>
-      <g v-for="table in props.tables" :key="table.id">
+      <g v-for="table in props.tables" :key="table.name">
         <!-- Table container -->
         <g 
           :transform="`translate(${table.x}, ${table.y})`"
@@ -201,15 +201,15 @@ const isPrimaryKeyConnected = (tableId: string, columnName: string) => {
 // Connection point calculation
 const getConnectionPoints = () => {
   const points: Array<{
-    id: string
+    name: string
     x: number
     y: number
     type: 'primary' | 'foreign'
-    tableId: string
+    tableName: string
     columnName: string
     isConnected?: boolean 
   }> = []
-
+  console.log(" > Here in getConnectionPoints, tables:", props.tables) // Debug log
   props.tables.forEach(table => {
     table.columns.forEach((column: any, columnIndex: number) => {
       const columnY = table.y + 48 + (columnIndex * 21) + 8 // Center of column row
@@ -217,11 +217,11 @@ const getConnectionPoints = () => {
       // Primary key connection point (left side)
       if (column.constraint === 'primary') {
         points.push({
-          id: `pk-${table.id}-${column.name}`,
+          name: `pk-${table.name}-${column.name}`,
           x: table.x,
           y: columnY,
           type: 'primary',
-          tableId: table.id,
+          tableName: table.name,
           columnName: column.name,
           isConnected: isPrimaryKeyConnected(table.id, column.name) // Check if connected
         })
@@ -230,11 +230,11 @@ const getConnectionPoints = () => {
       // Foreign key connection point (right side)
       if (column.datatype === 'Foreign Key') {
         points.push({
-          id: `fk-${table.id}-${column.name}`,
+          name: `fk-${table.name}-${column.name}`,
           x: table.x + 200, // right of table edge (table width is 200)
           y: columnY,
           type: 'foreign',
-          tableId: table.id,
+          tableName: table.name,
           columnName: column.name,
           isConnected: true // always connected by definition
         })
@@ -249,7 +249,7 @@ const connectionPoints = computed(() => getConnectionPoints())
 // Calculate connection lines
 const getConnections = () => {
   const connections: Array<{
-    id: string
+    name: string
     fromX: number
     fromY: number
     toX: number
@@ -263,21 +263,21 @@ const getConnections = () => {
       if (column.datatype === 'Foreign Key' && column.foreignKey) {
         // Find the FK connection point (right side of this table)
         const fkPoint = connectionPoints.find(p => 
-          p.tableId === table.id && 
+          p.tableName === table.name && 
           p.columnName === column.name && 
           p.type === 'foreign'
         )
 
         // Find the PK connection point (left side of referenced table)
         const pkPoint = connectionPoints.find(p => 
-          p.tableId === column.foreignKey.tableId && 
+          p.tableName === column.foreignKey.tableName && 
           p.columnName === column.foreignKey.columnName && 
           p.type === 'primary'
         )
 
         if (fkPoint && pkPoint) {
           connections.push({
-            id: `connection-${table.id}-${column.name}`,
+            name: `connection-${table.name}-${column.name}`,
             fromX: fkPoint.x,
             fromY: fkPoint.y,
             toX: pkPoint.x,
