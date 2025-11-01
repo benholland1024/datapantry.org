@@ -115,7 +115,7 @@
                 <div v-else class="w-2 h-3"></div>
                 <span class="text-sm text-white w-[90px] truncate">{{ column.name }}</span>
               </span>
-              <span class="text-gray-400 text-xs">{{ column.datatype === 'Foreign Key' ? 'FK' : column.datatype }}</span>
+              <span class="text-gray-400 text-xs">{{ getDisplayDatatype(column) }}</span>
               </div>
               
               <div v-if="table.columns.length === 0" 
@@ -196,6 +196,17 @@ const isPrimaryKeyConnected = (tableId: string, columnName: string) => {
       column.foreignKey?.columnName === columnName
     )
   )
+}
+
+const getDisplayDatatype = (column: any) => {
+  if (column.datatype === 'Foreign Key') {
+    return `FK`
+  }
+  const datatypeMap: Record<string, string> = {
+    'BOOLEAN': 'BOOL',
+    'DATETIME': 'DtTm',
+  }
+  return datatypeMap[column.datatype] || column.datatype
 }
 
 // Connection point calculation

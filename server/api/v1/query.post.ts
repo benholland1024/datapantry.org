@@ -61,11 +61,13 @@ export default defineEventHandler(async (event) => {
     const sqliteDb = new Database(sqlitePath)
 
     //  Check query for disallowed statements
-    const dangerousKeywords = /^\s*(ALTER|DROP|CREATE|TRUNCATE|RENAME)\s+/i
-    if (dangerousKeywords.test(query)) {
+    const dangerousKeywords = /^\s*(ALTER|DROP|CREATE|TRUNCATE|RENAME|ATTACH|PRAGMA)\s+/i
+    const metadataTableAccess = /__datapantry_/i
+
+    if (dangerousKeywords.test(query) || metadataTableAccess.test(query)) {
       throw createError({ 
         statusCode: 403, 
-        statusMessage: 'Schema modifications not allowed via API. Use the DataPantry dashboard.' 
+        statusMessage: 'Schema changes and metadata access not allowed via API - use datapantry.org.' 
       })
     }
 

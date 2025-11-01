@@ -23,6 +23,9 @@ export default defineEventHandler(async (event) => {
     const databaseId = parseInt(getRouterParam(event, 'databaseId') as string)
     const { newTableName, columns, columnChanges, preserveData } = await readBody(event)
 
+    console.log('Update table with columns:', columns)
+    console.log('Column changes:', JSON.stringify(columnChanges, null, 2))
+    
     const query = getQuery(event)
     const { sessionId, tableName } = query
 
@@ -100,25 +103,47 @@ export default defineEventHandler(async (event) => {
         .all()
     }
 
+    // Check if metadata table exists - can remove this after initial rollout
+    const metadataTableExists = sqliteDb
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='__datapantry_metadata'`)
+      .get()
+    
+    if (!metadataTableExists) {
+      // Create metadata table
+      const createMetadataSQL = `CREATE TABLE __datapantry_metadata (
+        table_name TEXT,
+        column_name TEXT,
+        semantic_type TEXT,
+        PRIMARY KEY (table_name, column_name)
+      )`
+      sqliteDb.prepare(createMetadataSQL).run()
+    }
+
     // SQLite has limited ALTER TABLE support, so we'll rebuild the table
     // 1. Create new table with updated schema
     const tempTableName = `${tableName}_temp_${Date.now()}`
-    const createTableSQL = buildCreateTableSQL(tempTableName, columns, sqliteDb)
+    const { sql: createTableSQL, semanticTypes } = buildCreateTableSQL(tempTableName, columns, sqliteDb)
+    console.log('Create table SQL:', createTableSQL)
     sqliteDb.prepare(createTableSQL).run()
+    
 
     // 2. If preserving data, transform and insert it
     if (preserveData && existingRows.length > 0) {
       const transformedRows = transformRows(existingRows, columnChanges, columns)
       
+      // Validate foreign key values before inserting
+      const validatedRows = validateForeignKeyValues(transformedRows, columns, sqliteDb)
+
       // Build INSERT statement
       const columnNames = columns.map((c: any) => `"${c.name}"`).join(', ')
       const placeholders = columns.map(() => '?').join(', ')
+      console.log('About to run this: ', `INSERT INTO "${tempTableName}" (${columnNames}) VALUES (${placeholders})`)
       const insertStmt = sqliteDb.prepare(
         `INSERT INTO "${tempTableName}" (${columnNames}) VALUES (${placeholders})`
       )
 
       // Insert transformed rows
-      for (const row of transformedRows) {
+      for (const row of validatedRows) {
         const values = columns.map((col: any) => row[col.name] ?? null)
         insertStmt.run(values)
       }
@@ -128,9 +153,23 @@ export default defineEventHandler(async (event) => {
     sqliteDb.prepare(`DROP TABLE "${tableName}"`).run()
     const finalTableName = (newTableName && newTableName.trim() !== '') ? newTableName.trim() : tableName
     sqliteDb.prepare(`ALTER TABLE "${tempTableName}" RENAME TO "${finalTableName}"`).run()
+
+    // 4. Update metadata table with semantic types
+    //  Save semantic type in metadata table if applicable
+    for (const col of columns) {
+      const semanticType = semanticTypes[col.name] || 'none'
+      if (!semanticType || semanticType === 'none') {
+        // Delete existing metadata entry if any
+        const deleteMetaSQL = `DELETE FROM __datapantry_metadata WHERE table_name = ? AND column_name = ?`
+        sqliteDb.prepare(deleteMetaSQL).run(tableName, col.name)
+      } else { // Insert or update metadata
+        const insertMetaSQL = `INSERT OR REPLACE INTO __datapantry_metadata (table_name, column_name, semantic_type) VALUES (?, ?, ?)`
+        sqliteDb.prepare(insertMetaSQL).run(tableName, col.name, semanticType)
+      }
+    }
     
 
-    // 4. Update table name in Postgres positions table if renamed
+    // 5. Update table name in Postgres positions table if renamed
     if (newTableName && newTableName.trim() !== '' && newTableName !== tableName) {
       await db
         .update(userTablePositions)
@@ -157,23 +196,38 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): string {
+function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): { sql: string, semanticTypes: Record<string, string> } {
+  const semanticTypes: Record<string, string> = {}
   const columnDefs = columns.map(col => {
     let def = `"${col.name}" `
+    let semanticType = ''
 
     // Map datatype to SQLite type
     switch(col.datatype.toLowerCase()) {
-      case 'number':
-        def += 'REAL'
+      case 'integer':
+        def += 'INTEGER'
         break
       case 'real':
         def += 'REAL'
         break
-      case 'string':
-        def += 'TEXT'
-        break
       case 'text':
         def += 'TEXT'
+        break
+      case 'date':
+        def += 'TEXT'
+        semanticType = 'DATE'
+        break
+      case 'time':
+        def += 'TEXT'
+        semanticType = 'TIME'
+        break
+      case 'datetime':
+        def += 'TEXT'
+        semanticType = 'DATETIME'
+        break
+      case 'boolean':
+        def += 'INTEGER' // SQLite uses 0/1 for booleans
+        semanticType = 'BOOLEAN'
         break
       case 'foreign key':
         // FK type matches referenced column type
@@ -184,14 +238,9 @@ function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): 
         )
         def += type ? type : 'REAL' // Default, should ideally check referenced column
         break
-      case 'boolean':
-        def += 'INTEGER' // SQLite uses 0/1 for booleans
-        break
       default:
         def += 'TEXT'
     }
-
-    console.log("Column definition so far:", def) // Debug log
     
     // Add constraints
     if (col.constraint === 'primary') {
@@ -202,6 +251,10 @@ function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): 
     
     if (col.isRequired) {
       def += ' NOT NULL'
+    }
+
+    if (semanticType) {
+      semanticTypes[col.name] = semanticType
     }
     
     return def
@@ -215,7 +268,10 @@ function buildCreateTableSQL(tableName: string, columns: any[], sqliteDb: any): 
     })
   
   const allDefs = [...columnDefs, ...foreignKeys].join(', ')
-  return `CREATE TABLE "${tableName}" (${allDefs})`
+  return {
+    sql: `CREATE TABLE "${tableName}" (${allDefs})`,
+    semanticTypes
+  }
 }
 
 //  Gets the datatype of the foreign key column from the referenced table
@@ -228,9 +284,7 @@ function getForeignKeyColumnType(
     .prepare(`PRAGMA table_info("${referencedTable}")`)
     .all()
   
-  console.log("PRAGMA info for table", referencedTable, ":", pragma )
   const columnInfo = pragma.find((col: any) => col.name === referencedColumn)
-  console.log("Foreign key column info:", columnInfo)
   return columnInfo ? columnInfo.type : null
 }
 
@@ -449,4 +503,40 @@ export {
   getDefaultValue, 
   applyConstraintChanges, 
   applyIsRequiredChanges 
+}
+
+function validateForeignKeyValues(
+  rows: any[], 
+  columns: any[], 
+  sqliteDb: any
+): any[] {
+  const fkColumns = columns.filter(col => col.datatype.toLowerCase() === 'foreign key')
+  
+  for (const fkCol of fkColumns) {
+    if (!fkCol.foreignKey) continue
+    
+    // Get valid values from referenced table
+    try {
+      const validValues = sqliteDb
+        .prepare(`SELECT DISTINCT "${fkCol.foreignKey.columnName}" FROM "${fkCol.foreignKey.tableName}" WHERE "${fkCol.foreignKey.columnName}" IS NOT NULL`)
+        .all()
+        .map((row: any) => row[fkCol.foreignKey.columnName])
+      
+      // Clean up invalid FK values
+      for (const row of rows) {
+        const value = row[fkCol.name]
+        if (value !== null && !validValues.includes(value)) {
+          row[fkCol.name] = null
+        }
+      }
+    } catch (error) {
+      console.warn(`Could not validate FK values for ${fkCol.name}:`, error)
+      // If we can't validate, set all FK values to null to be safe
+      for (const row of rows) {
+        row[fkCol.name] = null
+      }
+    }
+  }
+  
+  return rows
 }

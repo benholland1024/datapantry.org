@@ -30,7 +30,7 @@
         <UButton 
           size="sm" 
           @click="addColumn"
-          icon="i-lucide-plus"
+          icon="ic:outline-plus"
         >
           Add Column
         </UButton>
@@ -328,6 +328,11 @@ const datatypeOptions = computed(() => {
   const baseOptions = [
     { label: 'TEXT', value: 'TEXT' },
     { label: 'REAL', value: 'REAL' },
+    { label: 'INTEGER', value: 'INTEGER' },
+    { label: 'BOOLEAN', value: 'BOOLEAN' },
+    { label: 'DATE', value: 'DATE' },
+    { label: 'TIME', value: 'TIME' },
+    { label: 'DATETIME', value: 'DATETIME' },
   ]
   
   // Add FK options for all other tables

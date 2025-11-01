@@ -127,7 +127,7 @@
           <!-- Save status -->
           <div class="flex items-center gap-1 text-sm">
             <UIcon 
-              v-if="saveStatus === 'editing'" 
+              v-if="saveStatus === 'editing'"
               name="material-symbols:edit-outline" 
               class="w-4 h-4 text-orange-400" 
             />
@@ -252,12 +252,17 @@ const loadSchema = async () => {
     const sessionId = localStorage.getItem('sessionId')
     const response = await $fetch('/api/database/' + databaseId + '?sessionId=' + sessionId) as unknown as { tables: any[] }
     tables.value = response.tables
+    console.log('Loaded schema:', tables.value)
 
     //  Add unique IDs to table columns, for editing
     tables.value.forEach(table => {
       table.columns.forEach((column: any) => {
         if (!column.id) {
           column.id = uuidv4()
+        }
+        if (column.semanticType) {
+          column.datatype = column.semanticType
+          delete column.semanticType
         }
       })
     })
