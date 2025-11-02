@@ -4,13 +4,15 @@ import { sessions, users } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {
-    const { sessionId } = await readBody(event)
+    // Read sessionId from cookie instead of request body
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Session ID required'
-      })
+      return { 
+        success: false, 
+        user: null,
+        message: 'Session ID required'
+      }
     }
 
     // Find valid session with user data

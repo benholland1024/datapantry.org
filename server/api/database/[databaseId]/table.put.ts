@@ -1,5 +1,5 @@
 /**
- * PUT /api/database/:databaseId/table?tableName=...&sessionId=...
+ * PUT /api/database/:databaseId/table?tableName=...
  * Updates a table and table columns. 
  * Can be passed a "preserveData" flag to keep or delete existing rows. 
  * Body: { newTableName?, columns: [...], columnChanges: [...], preserveData: boolean }
@@ -27,7 +27,8 @@ export default defineEventHandler(async (event) => {
     console.log('Column changes:', JSON.stringify(columnChanges, null, 2))
     
     const query = getQuery(event)
-    const { sessionId, tableName } = query
+    const { tableName } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !tableName || !databaseId || !columns) {
       throw createError({

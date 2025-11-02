@@ -9,9 +9,9 @@ import { userDatabases, sessions, users } from '../../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {
-    const { newName, sessionId } = await readBody(event)
+    const { newName } = await readBody(event)
     const databaseId = event.context.params?.databaseId
-
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!newName || !sessionId || !databaseId) {
       throw createError({

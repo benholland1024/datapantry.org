@@ -60,20 +60,13 @@ export function useDatabase() {
 
   const fetchUserDatabases = async () => {
     if (!process.client) return
-
-    const sessionId = localStorage.getItem('sessionId')
-    
-    if (!sessionId) {
-      error.value = 'No active session'
-      return
-    }
   
     loading.value = true
     error.value = null
     
     try {
       const response = await $fetch<any>(
-        `/api/database?sessionId=${sessionId}`,
+        `/api/database`,
         { method: 'GET' }
       )
       userDatabases.value = response.databases
@@ -85,24 +78,26 @@ export function useDatabase() {
     }
   }
 
-  const signOut = () => {
-    currentUser.value = null
-    localStorage.removeItem('sessionId')
-    navigateTo('/')
+  const signOut = async () => {
+    try {
+      await $fetch('/api/user/signout', {
+        method: 'POST'
+      })
+    } catch (error) {
+      console.error('Signout request failed:', error)
+    } finally {
+      // Clear local state regardless
+      currentUser.value = null
+      navigateTo('/')
+    }
   }
 
   const createDatabase = async (name: string) => {
-    const sessionId = localStorage.getItem('sessionId')
-    
-    if (!sessionId) {
-      error.value = 'No active session'
-      return
-    }
   
     try {
       const response = await $fetch<any>('/api/database', {
         method: 'POST',
-        body: { name, sessionId }
+        body: { name }
       })
   
       // Add the new database to the local state
@@ -153,15 +148,9 @@ export function useDatabase() {
 
   //  Open a modal to confirm deletion of a database and get delete impact
   const getDeleteDatabaseImpact = async(databaseId: number) => {
-    const sessionId = localStorage.getItem('sessionId')
-    
-    if (!sessionId) {
-      error.value = 'No active session'
-      return
-    }
 
     try {
-      const response = await $fetch(`/api/database/${databaseId}/impact?sessionId=${sessionId}`, {
+      const response = await $fetch(`/api/database/${databaseId}/impact`, {
         method: 'GET',
       })
       deleteDBImpact.value = response
@@ -174,17 +163,10 @@ export function useDatabase() {
 
   //  Delete a database
   const deleteDatabase = async (databaseId: number) => {
-    const sessionId = localStorage.getItem('sessionId')
-    
-    if (!sessionId) {
-      error.value = 'No active session'
-      return
-    }
-  
+
     try {
-      await $fetch<any>(`/api/database/${databaseId}?sessionId=${sessionId}`, {
+      await $fetch<any>(`/api/database/${databaseId}`, {
         method: 'DELETE',
-        body: { sessionId }
       })
   
       // Remove the database from the local state

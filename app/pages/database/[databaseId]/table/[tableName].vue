@@ -323,9 +323,8 @@ const editValidation = computed(() => {
 const loadTableData = async () => {
   loading.value = true
   try {
-    const sessionId = localStorage.getItem('sessionId')
     const response = await $fetch(
-      `/api/database/${databaseId}/table?tableName=${tableName}&sessionId=${sessionId}`
+      `/api/database/${databaseId}/table?tableName=${tableName}`
     ) as { table: any, rows: any[] }
     
     currentTable.value = response.table
@@ -337,7 +336,7 @@ const loadTableData = async () => {
     for (const col of currentTable.value.columns) {
       if (col.datatype === 'Foreign Key' && col.foreignKey) {
         const fkResponse = await $fetch(
-          `/api/database/${databaseId}/table?tableName=${col.foreignKey.tableName}&sessionId=${sessionId}`
+          `/api/database/${databaseId}/table?tableName=${col.foreignKey.tableName}`
         ) as { table: any, rows: any[] }
         FKTables.value.push({
           tableId: col.foreignKey.tableId,
@@ -401,7 +400,6 @@ const addRowDraft = () => {
 
 const saveRow = async () => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
     
     if (rowEditDraft.value.isAddingNew) {
       delete rowEditDraft.value.isAddingNew  // Clean up flag
@@ -413,7 +411,6 @@ const saveRow = async () => {
         body: {
           row: rowData,
           tableName: currentTable.value.name,
-          sessionId
         }
       }) as { row: any }
       
@@ -441,7 +438,6 @@ const saveRow = async () => {
         body: {
           row: rowData,
           tableName: currentTable.value.name,
-          sessionId,
           oldRowPK,
           pkColumn
         }
@@ -478,7 +474,6 @@ const cancelEdit = () => {
 //  Delete a single row (the trash can button)
 const deleteRow = async (rowId: string) => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
     const pkColumn = currentTable.value.columns.find((c: any) => c.constraint === 'primary')?.name
     if (!pkColumn) {
       throw new Error('Primary key column not found')
@@ -491,7 +486,6 @@ const deleteRow = async (rowId: string) => {
     await $fetch(`/api/database/${databaseId}/row?tableName=${currentTable.value.name}&rowId=${rowId}`, {
       method: 'DELETE',
       body: { 
-        sessionId,
         tableName: currentTable.value.name,
         rowPK,
         pkColumn
@@ -511,8 +505,6 @@ const deleteRow = async (rowId: string) => {
 //  Delete the selected rows
 const deleteSelected = async () => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
-
     const pkColumn = currentTable.value.columns.find((c: any) => c.constraint === 'primary')?.name
     if (!pkColumn) {
       throw new Error('Primary key column not found')
@@ -529,7 +521,6 @@ const deleteSelected = async () => {
     await $fetch(`/api/database/${databaseId}/rows?tableName=${currentTable.value.name}`, {
       method: 'DELETE',
       body: { 
-        sessionId, 
         tableName: currentTable.value.name,
         pkColumn,
         rowPKs 

@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const query = getQuery(event)
-    const { sessionId } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId) {
       throw createError({

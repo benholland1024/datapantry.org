@@ -632,13 +632,12 @@ const deleteTable = () => {
 //  Open the impace modal, showing potentially destructive changes
 const getChangeImpact = async () => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
     loadingImpact.value = true
     openImpactModal.value = true
 
     const response = await $fetch(
       `/api/database/${currentDatabase.value?.id}/table/impact`
-        + `?tableName=${selectedTableData.value.name}&sessionId=${sessionId}`, 
+        + `?tableName=${selectedTableData.value.name}`, 
       { method: 'GET', }
     )
 
@@ -652,10 +651,9 @@ const getChangeImpact = async () => {
 
 const confirmChanges = () => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
     openImpactModal.value = false
 
-    $fetch(`/api/database/${currentDatabase.value?.id}/table?tableName=${selectedTableData.value.name}&sessionId=${sessionId}`, {
+    $fetch(`/api/database/${currentDatabase.value?.id}/table?tableName=${selectedTableData.value.name}`, {
       method: 'PUT',
       body: { 
         newTableName: selectedTableNewName.value,

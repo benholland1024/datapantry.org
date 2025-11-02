@@ -148,7 +148,6 @@ const saveChanges = async () => {
     const _response = await $fetch('/api/user/update', {
       method: 'POST',
       body: {
-        sessionId: localStorage.getItem('sessionId'),
         username: usernameDraft.value,
         email: emailDraft.value
       }
@@ -194,7 +193,6 @@ const updatePassword = async () => {
     const _response = await $fetch('/api/user/change-password', {
       method: 'POST',
       body: {
-        sessionId: localStorage.getItem('sessionId'),
         oldPassword: oldPassword.value,
         newPassword: newPassword.value
       }

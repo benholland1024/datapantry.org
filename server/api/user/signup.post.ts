@@ -49,10 +49,17 @@ export default defineEventHandler(async (event) => {
       expiresAt,
     })
 
+    // Set httpOnly cookie
+    setCookie(event, 'sessionId', sessionId, {
+      httpOnly: true,        // JavaScript cannot access this cookie
+      secure: true,          // Only sent over HTTPS
+      sameSite: 'strict',    // CSRF protection
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
     return { 
       success: true, 
       user: newUser,
-      sessionId
     }
   } catch (error: any) {
     console.error('Sign-up error:', error)

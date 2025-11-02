@@ -1,5 +1,5 @@
 /**
- * DELETE /api/database/:databaseId?sessionId=...
+ * DELETE /api/database/:databaseId
  * 
  * Delete a database and all its associated tables and rows.
  * Requires a valid session ID for authentication.
@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const query = getQuery(event)
-    const { sessionId } = query
-
+    const sessionId = getCookie(event, 'sessionId')
+    
     if (!sessionId || !databaseId) {
       throw createError({
         statusCode: 400,

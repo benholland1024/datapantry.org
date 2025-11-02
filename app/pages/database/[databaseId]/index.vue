@@ -249,8 +249,7 @@ const loadSchema = async () => {
   
   isLoading.value = true
   try {
-    const sessionId = localStorage.getItem('sessionId')
-    const response = await $fetch('/api/database/' + databaseId + '?sessionId=' + sessionId) as unknown as { tables: any[] }
+    const response = await $fetch('/api/database/' + databaseId) as unknown as { tables: any[] }
     tables.value = response.tables
     console.log('Loaded schema:', tables.value)
 
@@ -281,8 +280,6 @@ const saveSchema = async () => {
   saveStatus.value = 'saving'
 
   try {
-    const sessionId = localStorage.getItem('sessionId')
-    
     const tablesToSave = tables.value.map(table => ({
       ...table,
       x: Math.round(table.x),
@@ -291,7 +288,7 @@ const saveSchema = async () => {
     
     await $fetch(`/api/database/${databaseId}`, {
       method: 'POST',
-      body: { tables: tablesToSave, sessionId }
+      body: { tables: tablesToSave }
     })
     
     saveStatus.value = 'saved'
@@ -441,10 +438,9 @@ const isDBNameValid = computed(() => {
 const updateDatabaseName = async () => {
   if (!currentDatabase.value) return
   try {
-    const sessionId = localStorage.getItem('sessionId')
     await $fetch(`/api/database/${databaseId}/rename`, {
       method: 'POST',
-      body: { newName: databaseNameDraft.value, sessionId }
+      body: { newName: databaseNameDraft.value }
     })
     currentDatabase.value.name = databaseNameDraft.value
   } catch (error) {
@@ -504,14 +500,13 @@ useHead({
 
 const getDeleteTableImpact = async (tableName: string) => {
   try {
-    const sessionId = localStorage.getItem('sessionId')
     loadingDeleteImpact.value = true
     openDeleteImpactModal.value = true
     selectedDeleteTableName.value = tableName
 
     const response = await $fetch(
       `/api/database/${currentDatabase.value?.id}/table/impact`
-        + `?tableName=${tableName}&sessionId=${sessionId}`, 
+        + `?tableName=${tableName}`, 
       { method: 'GET', }
     )
 

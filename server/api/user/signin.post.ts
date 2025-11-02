@@ -47,10 +47,17 @@ export default defineEventHandler(async (event) => {
     // Return user data (without password)
     const { password: _, ...userWithoutPassword } = user
 
+    // Instead of returning sessionId, set as httpOnly cookie
+    setCookie(event, 'sessionId', sessionId, {
+      httpOnly: true,        // JavaScript cannot access this cookie
+      secure: true,          // Only sent over HTTPS
+      sameSite: 'strict',    // CSRF protection
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
     return { 
       success: true, 
       user: userWithoutPassword,
-      sessionId 
     }
     
   } catch (error: any) {

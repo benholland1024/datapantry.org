@@ -1,5 +1,5 @@
 /**
- * GET /api/database/:databaseId/table?tableName=Grocery Cart&sessionId=...
+ * GET /api/database/:databaseId/table?tableName=Grocery Cart
  * Responds with a table, its columns, and its rows.
  * 
  */
@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const query = getQuery(event)
-    const { sessionId, tableName } = query
+    const { tableName } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId || !tableName) {
       throw createError({

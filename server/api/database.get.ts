@@ -17,9 +17,7 @@ import { userDatabases, userTablePositions, sessions, users } from '../postgresD
 
 export default defineEventHandler(async (event) => {
   try {
-
-    const query = getQuery(event)
-    const { sessionId } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId) {
       throw createError({

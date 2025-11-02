@@ -4,7 +4,6 @@
  * DELETE /api/table/:tableId/row/:rowId
  * 
  * Parameters:
- * - sessionId: string (required)
  * - tableId: string (from URL, required)
  * - rowId: string (from URL, required)
  */
@@ -18,7 +17,8 @@ import path from 'path'
 export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
-    const { sessionId, rowPK, pkColumn, tableName } = await readBody(event)
+    const { rowPK, pkColumn, tableName } = await readBody(event)
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId || !rowPK || !pkColumn || !tableName) {
       throw createError({

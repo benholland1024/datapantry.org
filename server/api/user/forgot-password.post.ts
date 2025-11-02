@@ -3,7 +3,6 @@ import crypto from 'crypto'
 import { eq, and, gt } from 'drizzle-orm'
 import { db } from '../../postgresDB'
 import { users, passwordResetTokens, passwordResetRequestIPs } from '../../postgresDB/schema'
-import bcrypt from 'bcryptjs'
 
 // Simple getClientIP implementation for Nitro event
 function getClientIP(event: any): string {

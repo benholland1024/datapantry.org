@@ -5,7 +5,8 @@ import { users, sessions } from '../../postgresDB/schema'
 
 export default defineEventHandler(async (event) => {
   try {
-    const { email, username, sessionId } = await readBody(event)
+    const { email, username } = await readBody(event)
+    const sessionId = getCookie(event, 'sessionId')
 
     // Validate input
     if (!username || !sessionId) {

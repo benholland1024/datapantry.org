@@ -100,8 +100,7 @@ async function sign_in() {
       }
     })
 
-    // Store session in localStorage
-    localStorage.setItem('sessionId', response.sessionId)
+    // SessionId sent in httpOnly cookie now, no need to handle here
     
     // Set current user
     setCurrentUser(response.user as UserStructure)

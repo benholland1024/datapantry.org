@@ -12,7 +12,7 @@
 
         <!--  The login buttons / user buttons section. -->
         <!--  Appears on the client-side only with loading template on server-side,  -->
-        <!--  since the server can't check login status with localStorage. -->
+        <!--  since the server can't check login status with cookies. -->
         <ClientOnly>
           <div class="flex gap-2" v-if="!currentUser && !loading">
             <UButton to="/sign-in" 
@@ -194,12 +194,10 @@ const validDBName = computed(() => {
 
 // Check session immediately on client-side (non-blocking)
 if (process.client) {
-  const sessionId = localStorage.getItem('sessionId')
-  if (sessionId && !currentUser.value) {
+  if (!currentUser.value) {
     // Use .then() instead of await to avoid blocking
     $fetch('/api/user/validate-session', {
-      method: 'POST',
-      body: { sessionId }
+      method: 'POST'
     }).then((response) => {
       const res = response as { success: boolean; user?: any }
       if (res.success) {

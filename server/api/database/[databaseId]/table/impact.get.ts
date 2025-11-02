@@ -1,5 +1,5 @@
 /**
- * GET /api/database/:databaseId/table/impact?tableName=Grocery Cart&sessionId=...
+ * GET /api/database/:databaseId/table/impact?tableName=Grocery Cart
  * Responds with the impact analysis of deleting a table:
  * response = {
  *   tableName: string,
@@ -18,7 +18,8 @@ export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
     const query = getQuery(event)
-    const { sessionId, tableName } = query
+    const { tableName } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !tableName || !databaseId) {
       throw createError({

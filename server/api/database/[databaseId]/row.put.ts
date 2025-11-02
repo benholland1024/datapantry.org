@@ -7,7 +7,8 @@ import Database from 'better-sqlite3'
 export default defineEventHandler(async (event) => {
   try {
     const databaseId = getRouterParam(event, 'databaseId') as string
-    const { row, oldRowPK, pkColumn, sessionId, tableName } = await readBody(event)
+    const { row, oldRowPK, pkColumn, tableName } = await readBody(event)
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId || !tableName || !row || !oldRowPK || !pkColumn) {
       throw createError({

@@ -155,9 +155,6 @@ async function sign_up() {
       }
     })
 
-
-    localStorage.setItem('sessionId', response.sessionId)
-
     setCurrentUser(response.user as UserStructure)
     
     await navigateTo('/dashboard')

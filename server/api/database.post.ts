@@ -1,7 +1,7 @@
 /**
- * POST /api/database?sessionId=...
+ * POST /api/database
  * Create a new database for the authenticated user.
- * Expects: { name: string, sessionId: string }
+ * Expects: { name: string }
  * Returns: { success: boolean, database: { id, name, createdAt, tables: [] } }
  * 
  * Security checklist:
@@ -20,7 +20,8 @@ import fs from 'fs'
 
 export default defineEventHandler(async (event) => {
   try {
-    const { name, sessionId } = await readBody(event)
+    const { name } = await readBody(event)
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!name || !sessionId) {
       throw createError({

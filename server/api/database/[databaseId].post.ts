@@ -23,7 +23,8 @@ import fs from 'fs'
 export default defineEventHandler(async (event) => {
   try {
     const databaseId = parseInt(getRouterParam(event, 'databaseId') as string)
-    const { tables, sessionId } = await readBody(event)
+    const { tables } = await readBody(event)
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId || !tables) {
       throw createError({

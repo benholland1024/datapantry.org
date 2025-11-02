@@ -1,5 +1,5 @@
 /**
- * GET /api/database/[databaseId]?sessionId=...
+ * GET /api/database/[databaseId]
  * Returns the tables and columns for the specified database.
  */
 
@@ -12,8 +12,7 @@ import path from 'path'
 export default defineEventHandler(async (event) => {
   try {
     const databaseId = parseInt(getRouterParam(event, 'databaseId') as string)
-    const query = getQuery(event)
-    const { sessionId } = query
+    const sessionId = getCookie(event, 'sessionId')
 
     if (!sessionId || !databaseId) {
       throw createError({
