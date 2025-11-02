@@ -41,7 +41,6 @@ export default defineEventHandler(async (event) => {
       `${databaseId}.sqlite`
     )
     const sqliteDb = new Database(sqlitePath)
-    console.log('Checking for existing row with PK:', oldRowPK, 'in column:', pkColumn)
     const existingRow = sqliteDb.prepare(`SELECT * FROM '${tableName}' WHERE ${pkColumn} = ?`)
       .get(oldRowPK) as { id: string, [key: string]: any } | undefined
 

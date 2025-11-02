@@ -108,14 +108,33 @@ export default defineEventHandler(async (event) => {
       return 'none'
     }
 
+    // Get metadata from __datapantry_metadata table
+    const metadata: Record<string, Record<string, string>> = {}
+    let metadataRows: { table_name: string, column_name: string, semantic_type: string }[] = []
+    try {
+      metadataRows = sqliteDb.prepare(`
+        SELECT table_name, column_name, semantic_type FROM __datapantry_metadata
+      `).all() as { table_name: string, column_name: string, semantic_type: string }[]
+      for (const row of metadataRows) {
+        if (!metadata[row.table_name]) {
+          metadata[row.table_name] = {}
+        }
+        metadata[row.table_name][row.column_name] = row.semantic_type
+      }
+    } catch (err) {
+      // Table may not exist yet; ignore error
+    }
+    
+
     // Format columns with constraints
     const formattedColumns = columns.map(col => {
       // Foreign key info for this column
       const fk = foreignKeys.find(f => f.from === col.name)
       if (fk) { col.type = 'Foreign Key' } // Override type for FK columns
+      const semanticType = metadata[table.name] ? metadata[table.name][col.name] : undefined
       return {
         name: col.name,
-        datatype: col.type,
+        datatype: semanticType || col.type,
         isRequired: !!col.notnull,
         default: col.dflt_value,
         constraint: getColumnConstraint(col),

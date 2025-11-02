@@ -72,6 +72,15 @@ export default defineEventHandler(async (event) => {
     }
     const sqlitePath = path.join(userDir, `${databaseId}.sqlite`)
     const sqliteDb = new Database(sqlitePath)
+
+    // Create metadata table
+    const createMetadataSQL = `CREATE TABLE __datapantry_metadata (
+      table_name TEXT,
+      column_name TEXT,
+      semantic_type TEXT,
+      PRIMARY KEY (table_name, column_name)
+    )`
+    sqliteDb.prepare(createMetadataSQL).run()
     sqliteDb.close()
 
     return { 

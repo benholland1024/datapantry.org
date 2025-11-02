@@ -9,7 +9,7 @@
       >
         Back to Database
       </UButton>
-      <h1 class="text-3xl font-bold" v-if="currentTable && currentTable.name">
+      <h1 class="text-3xl font-bold truncate" v-if="currentTable && currentTable.name">
         {{ currentTable?.name }}
       </h1>
       <USkeleton v-else class="h-8 w-1/3" />
@@ -33,7 +33,7 @@
 
           <!-- Add Row (when not editing) -->
           <UButton v-if="!isEditing" @click="addRowDraft" color="primary">
-            <UIcon name="i-lucide-plus" class="w-4 h-4 mr-1" />
+            <UIcon name="ic:outline-plus" class="w-4 h-4 mr-1" />
             Add Row
           </UButton>
           
@@ -65,87 +65,118 @@
       </div>
 
       <!-- Data Table -->
-      <UTable 
-        :data="tableRowData"
-        :columns="tableColumns"
-        v-model:row-selection="selectedRows"
-        :ui="{ 
-          tbody: 'divide-y divide-gray-700',
-          tr: 'hover:bg-gray-700/30'
-        }"
-      >
-        <!-- Dynamic column header rendering -->
-        <template v-for="_column in dataColumns" 
-          :key="_column.key" 
-          #[`${_column.key}-header`]="{ column }"
+      <div class="w-full max-w-full">
+        <UTable 
+          :data="tableRowData"
+          :columns="tableColumns"
+          v-model:row-selection="selectedRows"
+          class="max-w-full [&>table]:!max-w-full [&>table]:!table-fixed [&>table]:!w-full"
+          :ui="{ 
+            tbody: 'divide-y divide-gray-700',
+            tr: 'hover:bg-gray-700/30',
+          }"
         >
-          <div class="flex items-center">
-            <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
-            <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
-            <UIcon v-else-if="_column.constraint === 'unique'" name="i-lucide-fingerprint" class="w-4 h-4 text-blue-400 mr-1" />
-            <span>{{ _column.label }}</span>
-          </div>
-        </template>
+          <!-- Dynamic column header rendering -->
+          <template v-for="_column in dataColumns" 
+            :key="_column.key" 
+            #[`${_column.key}-header`]="{ column }"
+          >
+            <div class="flex items-center">
+              <UIcon v-if="_column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-500 mr-1" />
+              <UIcon v-if="_column.constraint === 'primary'" name="i-lucide-key" class="w-4 h-4 text-yellow-400 mr-1" />
+              <UIcon v-else-if="_column.constraint === 'unique'" name="i-lucide-fingerprint" class="w-4 h-4 text-blue-400 mr-1" />
+              <span>{{ _column.label }}</span>
+            </div>
+            <div class="text-white/50">
+              <small class="text-xs">
+                {{ _column.datatype }}
+              </small>
+            </div>
+          </template>
 
-        <!-- Dynamic cell rendering -->
-        <template v-for="column in dataColumns" 
-          :key="column.key" 
-          #[`${column.key}-cell`]="{ row }"
-        >
-          <!-- Editable cell -->
-          <div v-if="isRowEditing(row.original._id)" class="px-4 py-5">
-            <UInput 
-              v-if="column.datatype === 'String'"
-              v-model="rowEditDraft.data[column.key]"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-            <UInput 
-              v-else-if="column.datatype === 'Number'"
-              v-model="rowEditDraft.data[column.key]"
-              type="number"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-            <USelectMenu
-              class="w-full"
-              :placeholder="`Select ${column.foreignKey?.columnName} from table '${ column.foreignKey?.tableId ? 
-                FKTables.find(t => t.tableId === column.foreignKey?.tableId)?.tableName : 'Unknown' }'`"
-              v-else-if="column.datatype === 'Foreign Key'"
-              :items="foreignKeyOptions[column.foreignKey?.tableId] || ['dang', column.foreignKey]"
-              v-model="rowEditDraft.data[column.key]"
-            />
-            <UInput 
-              v-else
-              v-model="rowEditDraft.data[column.key]"
-              :placeholder="column.label"
-              size="sm"
-              @keyup.enter="saveRow"
-              @keyup.escape="cancelEdit"
-            />
-          </div>
+          <!-- Dynamic cell rendering -->
+          <template v-for="column in dataColumns" 
+            :key="column.key"
+            #[`${column.key}-cell`]="{ row }"
+          >
+            <!-- Editable cell -->
+            <div v-if="isRowEditing(row.original._id)" class="px-4 py-5 h-full">
+              <UInput 
+                v-if="column.datatype === 'String'"
+                v-model="rowEditDraft.data[column.key]"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+              <UInput 
+                v-else-if="['number', 'integer', 'real'].includes(column.datatype.toLowerCase())"
+                v-model="rowEditDraft.data[column.key]"
+                type="number"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+              <UCheckbox 
+                v-else-if="column.datatype === 'BOOLEAN'"
+                class="h-full"
+                :label="rowEditDraft.data[column.key] ? 'true' : 'false'"
+                :modelValue="rowEditDraft.data[column.key] === 1"
+                @update:modelValue="(val: boolean) => rowEditDraft.data[column.key] = val ? 1 : 0"
+              />
+              <!-- <TimePicker 
+                v-else-if="column.datatype === 'TIME'"
+                v-model="rowEditDraft.data[column.key]"
+              /> -->
+              <UPopover v-else-if="column.datatype === 'DATE'">
+                <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
+                  {{ rowEditDraft.data[column.key] }}
+                </UButton>
+
+                <template #content>
+                  <UCalendar :modelValue="parseDate(rowEditDraft.data[column.key])" 
+                    @update:modelValue="(date: any) => rowEditDraft.data[column.key] = date.toString()"                  
+                    class="p-2"
+                  />
+                </template>
+              </UPopover>
+              <USelectMenu
+                v-else-if="column.datatype === 'Foreign Key'"
+                class="w-full"
+                :placeholder="`Select ${column.foreignKey?.columnName} from table '${ column.foreignKey?.tableId ? 
+                  FKTables.find(t => t.tableId === column.foreignKey?.tableId)?.tableName : 'Unknown' }'`"              
+                :items="foreignKeyOptions[column.foreignKey?.tableId] || ['dang', column.foreignKey]"
+                v-model="rowEditDraft.data[column.key]"
+              />
+              <UInput 
+                v-else
+                v-model="rowEditDraft.data[column.key]"
+                :placeholder="column.label"
+                size="sm"
+                @keyup.enter="saveRow"
+                @keyup.escape="cancelEdit"
+              />
+            </div>
+            
+            <!-- Display cell -->
+            <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 rounded truncate">
+              {{ formatCellValue(row, column.key, column.datatype) }}
+            </div>
+          </template>
           
-          <!-- Display cell -->
-          <div v-else @dblclick="startEditRow(row)" class="cursor-pointer px-4 py-5 rounded">
-            {{ formatCellValue(row, column.key, column.datatype) }}
-          </div>
-        </template>
-        
-        <!-- Actions column -->
-        <template #actions-cell="{ row }">
-          <UButton 
-            icon="i-lucide-trash-2" 
-            size="sm" 
-            color="error" 
-            variant="ghost"
-            @click="deleteRow(row.original._id)"
-          />
-        </template>
-      </UTable>
+          <!-- Actions column -->
+          <template #actions-cell="{ row }">
+            <UButton 
+              icon="i-lucide-trash-2" 
+              size="sm" 
+              color="error" 
+              variant="ghost"
+              @click="deleteRow(row.original._id)"
+            />
+          </template>
+        </UTable>
+      </div>
     </div>
 
     <div v-else class="text-center py-8">
@@ -155,10 +186,11 @@
 </template>
 
 <script setup lang="ts">
-import { table } from '#build/ui'
-import { useDatabase } from '@/composables/useDatabase'
+
+import { today, getLocalTimeZone, parseDate } from '@internationalized/date'
 import { v4 as uuidv4 } from 'uuid'
 
+// import TimePicker from '../../../../components/RowEditor/TimePicker.vue'
 const UCheckbox = resolveComponent('UCheckbox')
 const UBadge = resolveComponent('UBadge')
 
@@ -298,6 +330,8 @@ const loadTableData = async () => {
     
     currentTable.value = response.table
     tableRows.value = response.rows || []
+    console.log('currentTable:', currentTable.value)  // Debug log
+    console.log('tableRows:', tableRows.value)        // Debug log
 
     // Load all tables for FK dropdowns TODO
     for (const col of currentTable.value.columns) {
@@ -346,8 +380,12 @@ const addRowDraft = () => {
   rowEditDraft.value = { id: uuidv4(), isAddingNew: true, data: {} }
   dataColumns.value.forEach((col: any) => {
     if (col.key === 'id') return // Skip id field
-    if (col.datatype === 'Number') {
+    if (['number', 'integer', 'real'].includes(col.datatype.toLowerCase())) {
       rowEditDraft.value.data[col.key] = 0 // Default number to 0, not empty string
+    } else if (col.datatype === 'BOOLEAN') {
+      rowEditDraft.value.data[col.key] = 0;
+    } else if (col.datatype === 'DATE') {
+      rowEditDraft.value.data[col.key] = today(getLocalTimeZone()).toString();
     } else {
       rowEditDraft.value.data[col.key] = '' // Strings can be empty
     }
@@ -369,7 +407,7 @@ const saveRow = async () => {
       delete rowEditDraft.value.isAddingNew  // Clean up flag
       // Create new row
       const rowData = { ...rowEditDraft.value }
-
+      
       const response = await $fetch(`/api/database/${databaseId}/row`, {
         method: 'POST',
         body: {
@@ -510,7 +548,8 @@ const deleteSelected = async () => {
 const formatCellValue = (row: any, key: any, datatype: string) => {
   const value = row.original[key];
   if (value === null || value === undefined) return '-'
-  if (datatype === 'Number') return Number(value).toString()
+  if (datatype === 'BOOLEAN') return value === 1 ? 'true' : 'false'
+  if (['number', 'integer', 'real'].includes(datatype.toLowerCase())) return Number(value).toString()
   return String(value)
 }
 

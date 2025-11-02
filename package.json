@@ -15,7 +15,8 @@
     "db:reset": "./scripts/db-reset.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "cleanup:sessions": "tsx scripts/cleanup-sessions.ts"
   },
   "dependencies": {
     "@nuxt/image": "1.11.0",

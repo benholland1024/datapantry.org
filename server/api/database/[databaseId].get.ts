@@ -62,9 +62,27 @@ export default defineEventHandler(async (event) => {
     )
     try {
       const sqliteDb = new Database(sqlitePath)
-      // Query all user tables (exclude SQLite system tables)
+
+      // Get metadata from __datapantry_metadata table
+      const metadata: Record<string, Record<string, string>> = {}
+      let metadataRows: { table_name: string, column_name: string, semantic_type: string }[] = []
+      try {
+        metadataRows = sqliteDb.prepare(`
+          SELECT table_name, column_name, semantic_type FROM __datapantry_metadata
+        `).all() as { table_name: string, column_name: string, semantic_type: string }[]
+        for (const row of metadataRows) {
+          if (!metadata[row.table_name]) {
+            metadata[row.table_name] = {}
+          }
+          metadata[row.table_name][row.column_name] = row.semantic_type
+        }
+      } catch (err) {
+        // Table may not exist yet; ignore error
+      }
+
+      // Query all user tables (exclude SQLite system tables and metadata table)
       const tables = sqliteDb.prepare(`
-        SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'
+        SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__datapantry_metadata'
       `).all() as { name: string }[]
       for (const table of tables) {
         // Get columns for this table
@@ -112,14 +130,16 @@ export default defineEventHandler(async (event) => {
           return 'none'
         }
 
-        // Format columns with constraints
+        // Format columns with constraints + custom datatypes
         const formattedColumns = columns.map(col => {
           // Foreign key info for this column
           const fk = foreignKeys.find(f => f.from === col.name)
           if (fk) { col.type = 'Foreign Key' } // Override type for FK columns
+          const semanticType = metadata[table.name] ? metadata[table.name][col.name] : undefined
           return {
             name: col.name,
             datatype: col.type,
+            semanticType: semanticType || null,
             isRequired: !!col.notnull,
             default: col.dflt_value,
             constraint: getColumnConstraint(col),

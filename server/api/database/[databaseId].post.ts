@@ -3,8 +3,8 @@
  * Saves non-destructive schema changes: adding tables and updating positions.
  * 
  * For destructive changes, use:
- *  -  GET /api/table/:tableId/impact to get # rows affected, col differences, etc
- *  -  PUT /api/table/:tableId for column changes
+ *  -  GET /api/:databaseId/impact to get # rows affected, col differences, etc
+ *  -  PUT /api/:databaseId/table for column changes
  *  -  This file _can_ delete tables that were removed in the frontend. 
  */
 
@@ -79,9 +79,9 @@ export default defineEventHandler(async (event) => {
 
     const sqliteDb = new Database(sqlitePath)
 
-    // Get existing table names from SQLite
+    // Get existing table names from SQLite, excluding SQLite system tables and metadata table
     const existingTablesResult = sqliteDb
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`)
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__datapantry_metadata'`)
       .all()
     const existingTableNames = existingTablesResult.map((t: any) => t.name)
 

@@ -93,7 +93,7 @@
           <!-- Table name -->
           <foreignObject x="8" y="8" width="184" height="24">
             <div 
-              class="text-white font-semibold text-sm px-2 py-1"
+              class="text-white font-semibold text-sm px-2 py-1 truncate"
               @dblclick.stop="selectTable(table.name)"
             >
               {{ table.name }}
@@ -113,9 +113,9 @@
                 <div v-else class="w-3 h-3"></div>
                 <UIcon v-if="column.isRequired" name="i-lucide-asterisk" class="w-2 h-2 text-red-400" />
                 <div v-else class="w-2 h-3"></div>
-                <span class="text-sm text-white">{{ column.name }}</span>
+                <span class="text-sm text-white w-[90px] truncate">{{ column.name }}</span>
               </span>
-              <span class="text-gray-400 text-xs">{{ column.datatype }}</span>
+              <span class="text-gray-400 text-xs">{{ getDisplayDatatype(column) }}</span>
               </div>
               
               <div v-if="table.columns.length === 0" 
@@ -198,6 +198,17 @@ const isPrimaryKeyConnected = (tableId: string, columnName: string) => {
   )
 }
 
+const getDisplayDatatype = (column: any) => {
+  if (column.datatype === 'Foreign Key') {
+    return `FK`
+  }
+  const datatypeMap: Record<string, string> = {
+    'BOOLEAN': 'BOOL',
+    'DATETIME': 'DtTm',
+  }
+  return datatypeMap[column.datatype] || column.datatype
+}
+
 // Connection point calculation
 const getConnectionPoints = () => {
   const points: Array<{
@@ -209,7 +220,6 @@ const getConnectionPoints = () => {
     columnName: string
     isConnected?: boolean 
   }> = []
-  console.log(" > Here in getConnectionPoints, tables:", props.tables) // Debug log
   props.tables.forEach(table => {
     table.columns.forEach((column: any, columnIndex: number) => {
       const columnY = table.y + 48 + (columnIndex * 21) + 8 // Center of column row
